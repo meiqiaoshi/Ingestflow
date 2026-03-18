@@ -1,0 +1,17 @@
+source:
+  type: csv
+  path: data/sample_orders.csv
+
+target:
+  type: duckdb
+  table: raw_orders
+
+transform:
+  rename_columns:
+    orderid: order_id
+  cast_types:
+    amount: float
+    created_at: datetime
+
+load:
+  mode: replace
