@@ -20,4 +20,7 @@ validation:
     - created_at
 
 load:
-  mode: replace
+  mode: append
+  incremental:
+    enabled: true
+    watermark_column: created_at

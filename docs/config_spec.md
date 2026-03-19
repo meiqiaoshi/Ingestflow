@@ -111,13 +111,29 @@ Defines how data is written to the target.
 ```yaml
 load:
   mode: append
+  incremental:
+    enabled: true
+    watermark_column: created_at
 ```
 
 ### Supported Modes
 
 - append: insert all rows
-- replace (planned)
+- replace: replace target table
 - upsert (planned)
+
+### Incremental (Timestamp Watermark)
+
+Supported fields under `load.incremental`:
+
+- enabled: true/false
+- watermark_column: column used for checkpoint filtering
+
+Behavior:
+
+- system reads previous checkpoint from `ingestion_state`
+- keeps only rows where `watermark_column > checkpoint`
+- writes new checkpoint after successful load
 
 ---
 
@@ -145,6 +161,9 @@ validation:
 
 load:
   mode: append
+  incremental:
+    enabled: true
+    watermark_column: created_at
 ```
 
 ---

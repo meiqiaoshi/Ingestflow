@@ -8,6 +8,12 @@ from core.config import load_config
 from extractor.csv_extractor import extract_csv
 from transformer.basic_transformer import apply_transformations
 from loader.duckdb_loader import load_to_duckdb
+from loader.incremental_state import (
+    filter_incremental_by_watermark,
+    get_last_checkpoint,
+    max_checkpoint_value,
+    upsert_checkpoint,
+)
 from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
@@ -25,6 +31,13 @@ def run_pipeline(config_path: str):
 
     target = config["target"]
     load_mode = config.get("load", {}).get("mode", "replace")
+    db_path = config.get("target", {}).get("db_path", "warehouse.duckdb")
+    incremental_cfg = config.get("load", {}).get("incremental", {}) or {}
+    incremental_enabled = bool(incremental_cfg.get("enabled", False))
+    watermark_column = incremental_cfg.get("watermark_column")
+    pipeline_key = None
+    last_checkpoint = None
+    new_checkpoint = None
 
     df = None
     status = "success"
@@ -41,9 +54,32 @@ def run_pipeline(config_path: str):
         # validate (Phase 3 start)
         df = validate_data(df, config)
 
+        if incremental_enabled:
+            if not watermark_column:
+                raise ValueError(
+                    "Incremental load requires 'load.incremental.watermark_column'"
+                )
+
+            pipeline_key = f"{source['path']}::{target['table']}::{watermark_column}"
+            last_checkpoint = get_last_checkpoint(db_path=db_path, pipeline_key=pipeline_key)
+            df = filter_incremental_by_watermark(
+                df=df, watermark_column=watermark_column, last_checkpoint=last_checkpoint
+            )
+
         # load
-        load_to_duckdb(df, table=target["table"], mode=load_mode)
-        rows_loaded = len(df)
+        rows_loaded = load_to_duckdb(
+            df, table=target["table"], mode=load_mode, db_path=db_path
+        )
+
+        if incremental_enabled and pipeline_key:
+            new_checkpoint = max_checkpoint_value(df, watermark_column)
+            if new_checkpoint is not None:
+                upsert_checkpoint(
+                    db_path=db_path,
+                    pipeline_key=pipeline_key,
+                    watermark_column=watermark_column,
+                    checkpoint_value=new_checkpoint,
+                )
     except Exception as e:
         status = "failed"
         error_message = str(e)
@@ -55,7 +91,7 @@ def run_pipeline(config_path: str):
         finished_at = utc_now()
         try:
             record_run(
-                db_path="warehouse.duckdb",
+                db_path=db_path,
                 run_id=run_id,
                 started_at=started_at,
                 finished_at=finished_at,
@@ -77,11 +113,17 @@ def run_pipeline(config_path: str):
     print(f"Duration (s): {duration_s:.3f}")
     print(f"Source: {source['path']}")
     print(f"Target table: {target['table']}")
+    print(f"Load mode: {load_mode}")
     if df is not None:
         print(f"Rows loaded: {rows_loaded}")
         print(f"Columns: {list(df.columns)}\n")
     else:
         print(f"Rows loaded: {rows_loaded}\n")
+    if incremental_enabled:
+        print("Incremental: enabled")
+        print(f"Watermark column: {watermark_column}")
+        print(f"Previous checkpoint: {last_checkpoint}")
+        print(f"New checkpoint: {new_checkpoint}\n")
 
     if status == "failed" and error_message:
         print(f"Error: {error_message[:500]}")
