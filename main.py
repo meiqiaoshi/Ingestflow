@@ -30,6 +30,7 @@ def run_pipeline(config_path: str):
     status = "success"
     rows_loaded = None
     error_message = None
+    exc_info = None
 
     try:
         df = extract_csv(source["path"])
@@ -46,7 +47,10 @@ def run_pipeline(config_path: str):
     except Exception as e:
         status = "failed"
         error_message = str(e)
-        raise
+        # If we have a dataframe at this point, capture the row count for reporting.
+        if df is not None:
+            rows_loaded = len(df)
+        exc_info = sys.exc_info()
     finally:
         finished_at = utc_now()
         try:
@@ -78,6 +82,13 @@ def run_pipeline(config_path: str):
         print(f"Columns: {list(df.columns)}\n")
     else:
         print(f"Rows loaded: {rows_loaded}\n")
+
+    if status == "failed" and error_message:
+        print(f"Error: {error_message[:500]}")
+
+    if status == "failed" and exc_info is not None:
+        # Print summary first, then re-raise to ensure CI / callers see a failure.
+        raise exc_info[1].with_traceback(exc_info[2])
 
 
 if __name__ == "__main__":
