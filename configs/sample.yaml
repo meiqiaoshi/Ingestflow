@@ -13,5 +13,11 @@ transform:
     amount: float
     created_at: datetime
 
+validation:
+  required_columns:
+    - order_id
+    - amount
+    - created_at
+
 load:
   mode: replace

@@ -9,6 +9,7 @@ from extractor.csv_extractor import extract_csv
 from transformer.basic_transformer import apply_transformations
 from loader.duckdb_loader import load_to_duckdb
 from metadata.run_tracker import create_run_id, record_run, utc_now
+from validator.basic_validator import validate_data
 
 
 def run_pipeline(config_path: str):
@@ -35,6 +36,9 @@ def run_pipeline(config_path: str):
 
         # transform
         df = apply_transformations(df, config)
+
+        # validate (Phase 3 start)
+        df = validate_data(df, config)
 
         # load
         load_to_duckdb(df, table=target["table"], mode=load_mode)
