@@ -22,6 +22,10 @@ validation:
     - order_id
     - amount
     - created_at
+  type_checks:
+    order_id: int
+    amount: float
+    created_at: datetime
 
 load:
   mode: upsert

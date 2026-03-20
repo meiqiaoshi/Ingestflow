@@ -95,13 +95,16 @@ validation:
   null_checks:
     - order_id
     - amount
+  type_checks:
+    order_id: int
+    amount: float
 ```
 
 ### Supported Rules
 
 - required_columns: list of required fields
 - null_checks: list of columns that must not contain null, NaN, or NaT
-- (future) type_checks
+- type_checks: mapping `column: expected_kind` where `expected_kind` is one of `int`, `float`, `bool`, `str`, `datetime` (runs **after** `transform`, so it validates dtypes post-cast)
 
 ---
 
@@ -166,6 +169,7 @@ transform:
     orderid: order_id
   cast_types:
     amount: float
+    created_at: datetime
 
 validation:
   required_columns:
@@ -174,6 +178,10 @@ validation:
   null_checks:
     - order_id
     - amount
+  type_checks:
+    order_id: int
+    amount: float
+    created_at: datetime
 
 load:
   mode: upsert
