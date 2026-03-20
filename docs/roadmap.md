@@ -113,7 +113,7 @@ Support non-full-refresh ingestion patterns.
 - Upsert mode
 - Basic checkpoint/state tracking
 - Timestamp-based incremental ingestion
-- Primary key-based deduplication
+- Primary key-based deduplication (single or composite `primary_key`)
 
 ### Deliverables
 

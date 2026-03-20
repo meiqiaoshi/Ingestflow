@@ -120,11 +120,19 @@ load:
     primary_key: order_id
 ```
 
+Composite primary key example:
+
+```yaml
+load:
+  mode: upsert
+  primary_key: [order_id, region]
+```
+
 ### Supported Modes
 
 - append: insert all rows
 - replace: replace target table
-- upsert: delete rows matching primary keys, then insert new rows
+- upsert: delete rows matching primary key(s) (single or composite), then insert new rows
 
 ### Incremental (Timestamp Watermark)
 
@@ -132,7 +140,7 @@ Supported fields under `load.incremental`:
 
 - enabled: true/false
 - watermark_column: column used for checkpoint filtering
-- primary_key: primary key column used by `load.mode: upsert`
+- primary_key: primary key for `load.mode: upsert` — a single column name (string) or a list of column names for a composite key (can also be set under `load.primary_key`)
 
 Behavior:
 
