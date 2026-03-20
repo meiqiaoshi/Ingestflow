@@ -18,6 +18,10 @@ validation:
     - order_id
     - amount
     - created_at
+  null_checks:
+    - order_id
+    - amount
+    - created_at
 
 load:
   mode: upsert

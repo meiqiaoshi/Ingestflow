@@ -92,12 +92,15 @@ validation:
   required_columns:
     - order_id
     - amount
+  null_checks:
+    - order_id
+    - amount
 ```
 
 ### Supported Rules
 
 - required_columns: list of required fields
-- (future) null_checks
+- null_checks: list of columns that must not contain null, NaN, or NaT
 - (future) type_checks
 
 ---
@@ -158,6 +161,9 @@ transform:
 
 validation:
   required_columns:
+    - order_id
+    - amount
+  null_checks:
     - order_id
     - amount
 

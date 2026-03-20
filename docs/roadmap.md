@@ -83,7 +83,7 @@ Introduce validation rules before loading data into the target.
 - Required column checks
 - Missing column detection
 - Type validation
-- Optional null checks
+- Optional null checks (`validation.null_checks` in config)
 - Config-defined validation rules
 
 ### Deliverables
