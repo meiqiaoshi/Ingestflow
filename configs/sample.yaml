@@ -20,7 +20,8 @@ validation:
     - created_at
 
 load:
-  mode: append
+  mode: upsert
   incremental:
     enabled: true
     watermark_column: created_at
+    primary_key: order_id

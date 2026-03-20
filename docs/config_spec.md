@@ -110,17 +110,18 @@ Defines how data is written to the target.
 
 ```yaml
 load:
-  mode: append
+  mode: upsert
   incremental:
     enabled: true
     watermark_column: created_at
+    primary_key: order_id
 ```
 
 ### Supported Modes
 
 - append: insert all rows
 - replace: replace target table
-- upsert (planned)
+- upsert: delete rows matching primary keys, then insert new rows
 
 ### Incremental (Timestamp Watermark)
 
@@ -128,6 +129,7 @@ Supported fields under `load.incremental`:
 
 - enabled: true/false
 - watermark_column: column used for checkpoint filtering
+- primary_key: primary key column used by `load.mode: upsert`
 
 Behavior:
 
@@ -160,10 +162,11 @@ validation:
     - amount
 
 load:
-  mode: append
+  mode: upsert
   incremental:
     enabled: true
     watermark_column: created_at
+    primary_key: order_id
 ```
 
 ---

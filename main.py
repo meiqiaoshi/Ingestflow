@@ -35,6 +35,9 @@ def run_pipeline(config_path: str):
     incremental_cfg = config.get("load", {}).get("incremental", {}) or {}
     incremental_enabled = bool(incremental_cfg.get("enabled", False))
     watermark_column = incremental_cfg.get("watermark_column")
+    primary_key = config.get("load", {}).get("primary_key") or incremental_cfg.get(
+        "primary_key"
+    )
     pipeline_key = None
     last_checkpoint = None
     new_checkpoint = None
@@ -68,7 +71,11 @@ def run_pipeline(config_path: str):
 
         # load
         rows_loaded = load_to_duckdb(
-            df, table=target["table"], mode=load_mode, db_path=db_path
+            df,
+            table=target["table"],
+            mode=load_mode,
+            db_path=db_path,
+            primary_key=primary_key,
         )
 
         if incremental_enabled and pipeline_key:
