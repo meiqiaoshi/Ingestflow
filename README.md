@@ -13,6 +13,40 @@ Instead of writing ad-hoc scripts for each dataset, IngestFlow provides a reusab
 
 ---
 
+## Quick start
+
+Requires **Python 3.10+** and dependencies in `requirements.txt` (`pandas`, `pyyaml`, `duckdb`).
+
+```bash
+cd Ingestflow
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Run the sample pipeline:
+
+```bash
+python main.py --config configs/sample.yaml
+```
+
+Optional logging:
+
+```bash
+python main.py --config configs/sample.yaml --verbose
+python main.py --config configs/sample.yaml --quiet
+```
+
+Logs go to **stderr** at `INFO` by default.
+
+By default DuckDB writes to **`warehouse.duckdb`** in the project root (override with `target.db_path` in YAML). That file may contain:
+
+- **Business tables** (e.g. `raw_orders` from the sample config)
+- **`ingestion_runs`** — one row per run (run id, status, timestamps, row counts, errors)
+- **`ingestion_state`** — incremental checkpoints when `load.incremental.enabled` is true
+
+---
+
 ## 🎯 Key Features
 
 - 🔌 **Multi-Source Ingestion**
@@ -29,9 +63,9 @@ Instead of writing ad-hoc scripts for each dataset, IngestFlow provides a reusab
   - Type casting
   - Basic validation rules
 
-- 🔄 **Incremental Loading (Planned)**
+- 🔄 **Incremental Loading**
   - Append / upsert modes
-  - State tracking
+  - Timestamp watermark checkpoints (`ingestion_state`)
 
 - 🧾 **Run Metadata & Audit Logging**
   - Track pipeline execution history
@@ -138,11 +172,13 @@ load:
 
 ---
 
-## ▶️ Usage (Planned)
+## ▶️ Usage
 
 ```bash
-python main.py run --config configs/orders.yaml
+python main.py --config configs/sample.yaml
 ```
+
+See `docs/config_spec.md` for the full YAML schema.
 
 ---
 

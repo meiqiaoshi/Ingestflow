@@ -1,10 +1,12 @@
 import argparse
+import logging
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from core.config import load_config
+from core.logging_config import configure_logging
 from extractor.csv_extractor import extract_csv
 from transformer.basic_transformer import apply_transformations
 from loader.duckdb_loader import load_to_duckdb
@@ -17,8 +19,11 @@ from loader.incremental_state import (
 from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
+logger = logging.getLogger(__name__)
 
-def run_pipeline(config_path: str):
+
+def run_pipeline(config_path: str) -> None:
+    logger.info("Loading config: %s", config_path)
     config = load_config(config_path)
 
     run_id = create_run_id()
@@ -114,35 +119,39 @@ def run_pipeline(config_path: str):
 
     # summary
     duration_s = (utc_now() - started_at).total_seconds()
-    print("\n=== Ingestion Completed ===")
-    print(f"Run ID: {run_id}")
-    print(f"Status: {status}")
-    print(f"Duration (s): {duration_s:.3f}")
-    print(f"Source: {source['path']}")
-    print(f"Target table: {target['table']}")
-    print(f"Load mode: {load_mode}")
+    logger.info("=== Ingestion Completed ===")
+    logger.info("Run ID: %s", run_id)
+    logger.info("Status: %s", status)
+    logger.info("Duration (s): %.3f", duration_s)
+    logger.info("Source: %s", source["path"])
+    logger.info("Target table: %s", target["table"])
+    logger.info("Load mode: %s", load_mode)
     if df is not None:
-        print(f"Rows loaded: {rows_loaded}")
-        print(f"Columns: {list(df.columns)}\n")
+        logger.info("Rows loaded: %s", rows_loaded)
+        logger.info("Columns: %s", list(df.columns))
     else:
-        print(f"Rows loaded: {rows_loaded}\n")
+        logger.info("Rows loaded: %s", rows_loaded)
     if incremental_enabled:
-        print("Incremental: enabled")
-        print(f"Watermark column: {watermark_column}")
-        print(f"Previous checkpoint: {last_checkpoint}")
-        print(f"New checkpoint: {new_checkpoint}\n")
-
-    if status == "failed" and error_message:
-        print(f"Error: {error_message[:500]}")
+        logger.info("Incremental: enabled")
+        logger.info("Watermark column: %s", watermark_column)
+        logger.info("Previous checkpoint: %s", last_checkpoint)
+        logger.info("New checkpoint: %s", new_checkpoint)
 
     if status == "failed" and exc_info is not None:
-        # Print summary first, then re-raise to ensure CI / callers see a failure.
+        logger.error("Pipeline failed: %s", error_message[:500] if error_message else "")
         raise exc_info[1].with_traceback(exc_info[2])
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True)
+    parser = argparse.ArgumentParser(description="IngestFlow CSV → DuckDB pipeline")
+    parser.add_argument("--config", required=True, help="Path to YAML pipeline config")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Debug logging"
+    )
+    parser.add_argument(
+        "--quiet", "-q", action="store_true", help="Warnings and errors only"
+    )
     args = parser.parse_args()
 
+    configure_logging(verbose=args.verbose, quiet=args.quiet)
     run_pipeline(args.config)
