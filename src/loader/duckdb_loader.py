@@ -1,8 +1,19 @@
 from __future__ import annotations
 
+import re
+
 import duckdb
 import pandas as pd
 from typing import List, Optional, Sequence, Union
+
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _assert_identifier(name: str, field_name: str) -> None:
+    if not isinstance(name, str) or not _IDENTIFIER_RE.match(name):
+        raise ValueError(
+            f"Invalid {field_name}: '{name}'. Use letters/numbers/underscore and do not start with a number."
+        )
 
 
 def _table_exists(con: duckdb.DuckDBPyConnection, table: str) -> bool:
@@ -53,6 +64,7 @@ def load_to_duckdb(
     db_path: str = "warehouse.duckdb",
     primary_key: Optional[Union[str, Sequence[str]]] = None,
 ) -> int:
+    _assert_identifier(table, "table")
     con = duckdb.connect(db_path)
 
     try:
@@ -77,6 +89,7 @@ def load_to_duckdb(
             if not pk_cols:
                 raise ValueError("Upsert mode requires 'primary_key' (string or list of columns)")
             for col in pk_cols:
+                _assert_identifier(col, "primary_key column")
                 if col not in df.columns:
                     raise ValueError(
                         f"Upsert mode failed: primary_key column '{col}' not found in dataframe"

@@ -137,6 +137,14 @@ load:
 - replace: replace target table
 - upsert: delete rows matching primary key(s) (single or composite), then insert new rows
 
+### Validation Constraints
+
+- `load.mode` must be one of: `replace`, `append`, `upsert`
+- `load.mode: upsert` requires `primary_key` (under `load` or `load.incremental`)
+- `load.mode: replace` cannot be combined with `load.incremental.enabled: true`
+- `target.table`, `primary_key`, and `watermark_column` must be valid SQL-style identifiers:
+  letters/numbers/underscore only, and cannot start with a number
+
 ### Incremental (Timestamp Watermark)
 
 Supported fields under `load.incremental`:
