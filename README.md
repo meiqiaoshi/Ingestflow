@@ -39,6 +39,13 @@ python main.py --config configs/sample.yaml --quiet
 
 Logs go to **stderr** at `INFO` by default.
 
+### Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
 By default DuckDB writes to **`warehouse.duckdb`** in the project root (override with `target.db_path` in YAML). That file may contain:
 
 - **Business tables** (e.g. `raw_orders` from the sample config)

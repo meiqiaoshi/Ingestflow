@@ -19,6 +19,9 @@ dist/
 *.egg-info/
 *.egg
 
+# Tests
+.pytest_cache/
+
 # Local DB (pipeline 生成的库)
 *.duckdb
 
