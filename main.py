@@ -112,6 +112,8 @@ def run_pipeline(config_path: str) -> None:
                 target_table=target["table"],
                 rows_loaded=rows_loaded,
                 error_message=error_message,
+                load_mode=load_mode,
+                incremental_enabled=incremental_enabled,
             )
         except Exception:
             # Don't hide the original pipeline error if metadata recording fails.
