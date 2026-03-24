@@ -52,6 +52,8 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
+Includes mocks for DuckDB load/metadata so CI does not require a real `warehouse.duckdb` write.
+
 By default DuckDB writes to **`warehouse.duckdb`** in the project root (override with `target.db_path` in YAML). That file may contain:
 
 - **Business tables** (e.g. `raw_orders` from the sample config)
