@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
+    resolved_config_path = str(Path(config_path).resolve())
     logger.info("Loading config: %s", config_path)
     if dry_run:
         logger.info("Dry run: no writes to DuckDB (load, checkpoints, run metadata)")
@@ -122,6 +123,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
                     error_message=error_message,
                     load_mode=load_mode,
                     incremental_enabled=incremental_enabled,
+                    config_path=resolved_config_path,
                 )
             except Exception:
                 # Don't hide the original pipeline error if metadata recording fails.

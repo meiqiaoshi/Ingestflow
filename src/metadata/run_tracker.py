@@ -26,7 +26,8 @@ def ensure_runs_table(con: duckdb.DuckDBPyConnection) -> None:
             error_message VARCHAR,
             load_mode VARCHAR,
             incremental_enabled BOOLEAN,
-            db_path VARCHAR
+            db_path VARCHAR,
+            config_path VARCHAR
         )
         """
     )
@@ -35,6 +36,7 @@ def ensure_runs_table(con: duckdb.DuckDBPyConnection) -> None:
         "ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS load_mode VARCHAR",
         "ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS incremental_enabled BOOLEAN",
         "ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS db_path VARCHAR",
+        "ALTER TABLE ingestion_runs ADD COLUMN IF NOT EXISTS config_path VARCHAR",
     ):
         con.execute(stmt)
 
@@ -52,6 +54,7 @@ def record_run(
     error_message: Optional[str],
     load_mode: str,
     incremental_enabled: bool,
+    config_path: str,
 ) -> None:
     # Keep error strings from growing indefinitely.
     if error_message is not None and len(error_message) > 2000:
@@ -65,9 +68,9 @@ def record_run(
             INSERT INTO ingestion_runs (
                 run_id, started_at, finished_at, status,
                 source_path, target_table, rows_loaded, error_message,
-                load_mode, incremental_enabled, db_path
+                load_mode, incremental_enabled, db_path, config_path
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 run_id,
@@ -81,6 +84,7 @@ def record_run(
                 load_mode,
                 incremental_enabled,
                 db_path,
+                config_path,
             ],
         )
     finally:

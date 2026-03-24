@@ -51,4 +51,5 @@ def test_normal_run_calls_load_and_record_run(
     assert kwargs["load_mode"] == "upsert"
     assert kwargs["incremental_enabled"] is True
     assert kwargs["db_path"] == "warehouse.duckdb"
+    assert kwargs["config_path"] == str(Path(sample_config_path).resolve())
     mock_upsert.assert_called()

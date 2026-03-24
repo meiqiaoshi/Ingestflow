@@ -57,7 +57,7 @@ Includes mocks for DuckDB load/metadata so CI does not require a real `warehouse
 By default DuckDB writes to **`warehouse.duckdb`** in the project root (override with `target.db_path` in YAML). That file may contain:
 
 - **Business tables** (e.g. `raw_orders` from the sample config)
-- **`ingestion_runs`** — one row per run (run id, status, timestamps, row counts, errors, `load_mode`, `incremental_enabled`, `db_path`)
+- **`ingestion_runs`** — one row per run (run id, status, timestamps, row counts, errors, `load_mode`, `incremental_enabled`, `db_path`, resolved `config_path`)
 - **`ingestion_state`** — incremental checkpoints when `load.incremental.enabled` is true
 
 ---
