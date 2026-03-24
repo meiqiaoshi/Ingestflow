@@ -22,8 +22,10 @@ from validator.basic_validator import validate_data
 logger = logging.getLogger(__name__)
 
 
-def run_pipeline(config_path: str) -> None:
+def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
     logger.info("Loading config: %s", config_path)
+    if dry_run:
+        logger.info("Dry run: no writes to DuckDB (load, checkpoints, run metadata)")
     config = load_config(config_path)
 
     run_id = create_run_id()
@@ -74,24 +76,29 @@ def run_pipeline(config_path: str) -> None:
                 df=df, watermark_column=watermark_column, last_checkpoint=last_checkpoint
             )
 
-        # load
-        rows_loaded = load_to_duckdb(
-            df,
-            table=target["table"],
-            mode=load_mode,
-            db_path=db_path,
-            primary_key=primary_key,
-        )
+        if dry_run:
+            rows_loaded = len(df)
+            if incremental_enabled and pipeline_key:
+                new_checkpoint = max_checkpoint_value(df, watermark_column)
+        else:
+            # load
+            rows_loaded = load_to_duckdb(
+                df,
+                table=target["table"],
+                mode=load_mode,
+                db_path=db_path,
+                primary_key=primary_key,
+            )
 
-        if incremental_enabled and pipeline_key:
-            new_checkpoint = max_checkpoint_value(df, watermark_column)
-            if new_checkpoint is not None:
-                upsert_checkpoint(
-                    db_path=db_path,
-                    pipeline_key=pipeline_key,
-                    watermark_column=watermark_column,
-                    checkpoint_value=new_checkpoint,
-                )
+            if incremental_enabled and pipeline_key:
+                new_checkpoint = max_checkpoint_value(df, watermark_column)
+                if new_checkpoint is not None:
+                    upsert_checkpoint(
+                        db_path=db_path,
+                        pipeline_key=pipeline_key,
+                        watermark_column=watermark_column,
+                        checkpoint_value=new_checkpoint,
+                    )
     except Exception as e:
         status = "failed"
         error_message = str(e)
@@ -101,27 +108,30 @@ def run_pipeline(config_path: str) -> None:
         exc_info = sys.exc_info()
     finally:
         finished_at = utc_now()
-        try:
-            record_run(
-                db_path=db_path,
-                run_id=run_id,
-                started_at=started_at,
-                finished_at=finished_at,
-                status=status,
-                source_path=source["path"],
-                target_table=target["table"],
-                rows_loaded=rows_loaded,
-                error_message=error_message,
-                load_mode=load_mode,
-                incremental_enabled=incremental_enabled,
-            )
-        except Exception:
-            # Don't hide the original pipeline error if metadata recording fails.
-            pass
+        if not dry_run:
+            try:
+                record_run(
+                    db_path=db_path,
+                    run_id=run_id,
+                    started_at=started_at,
+                    finished_at=finished_at,
+                    status=status,
+                    source_path=source["path"],
+                    target_table=target["table"],
+                    rows_loaded=rows_loaded,
+                    error_message=error_message,
+                    load_mode=load_mode,
+                    incremental_enabled=incremental_enabled,
+                )
+            except Exception:
+                # Don't hide the original pipeline error if metadata recording fails.
+                pass
 
     # summary
     duration_s = (utc_now() - started_at).total_seconds()
     logger.info("=== Ingestion Completed ===")
+    if dry_run:
+        logger.info("Dry run: true (no database writes)")
     logger.info("Run ID: %s", run_id)
     logger.info("Status: %s", status)
     logger.info("Duration (s): %.3f", duration_s)
@@ -153,7 +163,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quiet", "-q", action="store_true", help="Warnings and errors only"
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate and transform only; do not load, update checkpoints, or write run metadata",
+    )
     args = parser.parse_args()
 
     configure_logging(verbose=args.verbose, quiet=args.quiet)
-    run_pipeline(args.config)
+    run_pipeline(args.config, dry_run=args.dry_run)
