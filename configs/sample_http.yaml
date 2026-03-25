@@ -1,0 +1,18 @@
+# Demo: public JSON placeholder API (array of objects). Requires network at run time.
+source:
+  type: http
+  url: https://jsonplaceholder.typicode.com/posts
+  method: GET
+
+target:
+  type: duckdb
+  table: http_posts
+
+validation:
+  required_columns:
+    - id
+    - userId
+    - title
+
+load:
+  mode: replace

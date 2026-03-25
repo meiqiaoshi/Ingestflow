@@ -34,10 +34,24 @@ def validate_runtime_config(config: dict) -> None:
     incremental = load.get("incremental", {}) or {}
 
     src_type = source.get("type")
-    if src_type not in ("csv", "parquet"):
-        raise ValueError("source.type must be 'csv' or 'parquet'")
-    if not isinstance(source.get("path"), str) or not source.get("path"):
-        raise ValueError("source.path must be a non-empty string")
+    if src_type not in ("csv", "parquet", "http"):
+        raise ValueError("source.type must be 'csv', 'parquet', or 'http'")
+
+    if src_type in ("csv", "parquet"):
+        if not isinstance(source.get("path"), str) or not source.get("path"):
+            raise ValueError("source.path must be a non-empty string")
+    elif src_type == "http":
+        if not isinstance(source.get("url"), str) or not source.get("url"):
+            raise ValueError("source.url must be a non-empty string")
+        method = source.get("method", "GET")
+        if not isinstance(method, str) or method.upper() != "GET":
+            raise ValueError("source.method must be GET for HTTP sources (Phase 5)")
+        hdrs = source.get("headers")
+        if hdrs is not None and not isinstance(hdrs, dict):
+            raise ValueError("source.headers must be a mapping when provided")
+        rk = source.get("records_key")
+        if rk is not None and not isinstance(rk, str):
+            raise ValueError("source.records_key must be a string when provided")
 
     if target.get("type") != "duckdb":
         raise ValueError("Only target.type='duckdb' is supported")

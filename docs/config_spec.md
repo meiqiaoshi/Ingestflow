@@ -43,10 +43,29 @@ source:
 
 Parquet ingestion requires **`pyarrow`** (listed in `requirements.txt`).
 
+### Example (HTTP JSON)
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  method: GET
+  headers:
+    Accept: application/json
+  # If the response is {"data": [ {...}, ... ]} instead of a bare array:
+  # records_key: data
+```
+
+Only **GET** is supported in the current HTTP connector. The response must be a JSON **array of objects**, or a JSON object with a list under `records_key`.
+
 ### Fields
 
-- type: source type (`csv`, `parquet`; more connectors planned)
-- path: file path (for csv and parquet)
+- type: source type (`csv`, `parquet`, `http`; more connectors planned)
+- path: file path (for `csv` and `parquet`)
+- url: HTTPS URL (for `http`)
+- method: `GET` (only option for now)
+- headers: optional mapping of request headers
+- records_key: optional key when the JSON root is an object wrapping the array
 
 ---
 
