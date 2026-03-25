@@ -33,10 +33,20 @@ source:
   path: data/orders.csv
 ```
 
+### Example (Parquet)
+
+```yaml
+source:
+  type: parquet
+  path: data/orders.parquet
+```
+
+Parquet ingestion requires **`pyarrow`** (listed in `requirements.txt`).
+
 ### Fields
 
-- type: source type (csv, api, database)
-- path: file path (for csv)
+- type: source type (`csv`, `parquet`; more connectors planned)
+- path: file path (for csv and parquet)
 
 ---
 

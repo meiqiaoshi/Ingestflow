@@ -1,0 +1,36 @@
+# Same pipeline as sample.yaml but reads Parquet (see data/sample_orders.parquet).
+source:
+  type: parquet
+  path: data/sample_orders.parquet
+
+target:
+  type: duckdb
+  table: raw_orders_parquet
+
+transform:
+  rename_columns:
+    orderid: order_id
+  cast_types:
+    amount: float
+    created_at: datetime
+
+validation:
+  required_columns:
+    - order_id
+    - amount
+    - created_at
+  null_checks:
+    - order_id
+    - amount
+    - created_at
+  type_checks:
+    order_id: int
+    amount: float
+    created_at: datetime
+
+load:
+  mode: upsert
+  incremental:
+    enabled: true
+    watermark_column: created_at
+    primary_key: order_id

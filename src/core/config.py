@@ -33,8 +33,9 @@ def validate_runtime_config(config: dict) -> None:
     load = config.get("load", {}) or {}
     incremental = load.get("incremental", {}) or {}
 
-    if source.get("type") != "csv":
-        raise ValueError("Only source.type='csv' is supported")
+    src_type = source.get("type")
+    if src_type not in ("csv", "parquet"):
+        raise ValueError("source.type must be 'csv' or 'parquet'")
     if not isinstance(source.get("path"), str) or not source.get("path"):
         raise ValueError("source.path must be a non-empty string")
 

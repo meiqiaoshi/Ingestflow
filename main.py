@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from core.config import load_config
 from core.logging_config import configure_logging
 from extractor.csv_extractor import extract_csv
+from extractor.parquet_extractor import extract_parquet
 from transformer.basic_transformer import apply_transformations
 from loader.duckdb_loader import load_to_duckdb
 from loader.incremental_state import (
@@ -34,9 +35,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
 
     # extract
     source = config["source"]
-    if source["type"] != "csv":
-        raise NotImplementedError("Only CSV source is supported in Phase 1")
-
+    src_type = source["type"]
     target = config["target"]
     load_mode = config.get("load", {}).get("mode", "replace")
     db_path = config.get("target", {}).get("db_path", "warehouse.duckdb")
@@ -57,7 +56,12 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
     exc_info = None
 
     try:
-        df = extract_csv(source["path"])
+        if src_type == "csv":
+            df = extract_csv(source["path"])
+        elif src_type == "parquet":
+            df = extract_parquet(source["path"])
+        else:
+            raise NotImplementedError(f"Unsupported source.type: {src_type}")
 
         # transform
         df = apply_transformations(df, config)
@@ -71,7 +75,9 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
                     "Incremental load requires 'load.incremental.watermark_column'"
                 )
 
-            pipeline_key = f"{source['path']}::{target['table']}::{watermark_column}"
+            pipeline_key = (
+                f"{src_type}:{source['path']}::{target['table']}::{watermark_column}"
+            )
             last_checkpoint = get_last_checkpoint(db_path=db_path, pipeline_key=pipeline_key)
             df = filter_incremental_by_watermark(
                 df=df, watermark_column=watermark_column, last_checkpoint=last_checkpoint

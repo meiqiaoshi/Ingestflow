@@ -44,3 +44,15 @@ def test_invalid_table_identifier() -> None:
     cfg = _minimal(target={"type": "duckdb", "table": "1bad"})
     with pytest.raises(ValueError, match="Invalid target.table"):
         validate_runtime_config(cfg)
+
+
+def test_parquet_source_ok() -> None:
+    validate_runtime_config(
+        _minimal(source={"type": "parquet", "path": "data/x.parquet"})
+    )
+
+
+def test_unknown_source_type_rejected() -> None:
+    cfg = _minimal(source={"type": "api", "path": "x"})
+    with pytest.raises(ValueError, match="source.type must be"):
+        validate_runtime_config(cfg)
