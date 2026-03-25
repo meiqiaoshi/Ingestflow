@@ -139,8 +139,8 @@ Expand beyond CSV ingestion.
 ### Scope
 
 - Parquet file source (`source.type: parquet`)
-- HTTP JSON source (`source.type: http`, GET + JSON array)
-- REST API connector (auth, POST, pagination — planned)
+- HTTP JSON source (`source.type: http`, GET/POST, retries, offset pagination)
+- REST API connector (OAuth, HMAC, streaming — planned)
 - Database connector (planned)
 - Shared connector interface (planned)
 - Source-specific configuration support

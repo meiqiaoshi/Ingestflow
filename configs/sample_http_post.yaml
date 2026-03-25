@@ -1,0 +1,26 @@
+# JSONPlaceholder: POST creates a resource; response is a single JSON object (not an array).
+# Requires network at run time.
+source:
+  type: http
+  url: https://jsonplaceholder.typicode.com/posts
+  method: POST
+  body:
+    title: ingestflow-test
+    body: hello
+    userId: 1
+  allow_single_object: true
+  retry:
+    count: 2
+    backoff_seconds: 0.5
+
+target:
+  type: duckdb
+  table: http_post_demo
+
+validation:
+  required_columns:
+    - id
+    - title
+
+load:
+  mode: replace

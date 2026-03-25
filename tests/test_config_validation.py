@@ -64,6 +64,20 @@ def test_http_source_ok() -> None:
     )
 
 
+def test_http_post_source_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "http",
+                "url": "https://example.com/api",
+                "method": "POST",
+                "body": {"x": 1},
+                "allow_single_object": True,
+            }
+        )
+    )
+
+
 def test_unknown_source_type_rejected() -> None:
     cfg = _minimal(source={"type": "api", "path": "x"})
     with pytest.raises(ValueError, match="source.type must be"):

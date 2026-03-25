@@ -56,16 +56,65 @@ source:
   # records_key: data
 ```
 
-Only **GET** is supported in the current HTTP connector. The response must be a JSON **array of objects**, or a JSON object with a list under `records_key`.
+### Example (HTTP POST + single object)
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  method: POST
+  body:
+    name: example
+  allow_single_object: true
+```
+
+Use **`allow_single_object: true`** when the API returns one JSON object (not an array).
+
+### Example (HTTP offset pagination)
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  method: GET
+  pagination:
+    enabled: true
+    strategy: offset_query
+    page_size: 20
+    max_requests: 50
+    limit_param: _limit
+    offset_param: _start
+    start_offset: 0
+```
+
+Query parameters are merged into `url`; pages are concatenated until a short page or `max_requests`.
+
+### Example (HTTP retries)
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  retry:
+    count: 3
+    backoff_seconds: 1.0
+```
+
+Retries apply to transient `urllib` failures (not JSON parse errors).
 
 ### Fields
 
 - type: source type (`csv`, `parquet`, `http`; more connectors planned)
 - path: file path (for `csv` and `parquet`)
 - url: HTTPS URL (for `http`)
-- method: `GET` (only option for now)
+- method: `GET` or `POST`
+- body: JSON object for `POST` (optional; defaults to `{}`)
 - headers: optional mapping of request headers
 - records_key: optional key when the JSON root is an object wrapping the array
+- allow_single_object: when `true`, a single JSON object is loaded as one row
+- timeout_seconds: optional request timeout (default `120`)
+- pagination: optional; `enabled`, `strategy: offset_query`, `page_size`, `max_requests`, optional `limit_param`, `offset_param`, `start_offset`
+- retry: optional; `count` (≥1), `backoff_seconds`
 
 ---
 

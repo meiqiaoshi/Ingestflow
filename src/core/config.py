@@ -44,14 +44,38 @@ def validate_runtime_config(config: dict) -> None:
         if not isinstance(source.get("url"), str) or not source.get("url"):
             raise ValueError("source.url must be a non-empty string")
         method = source.get("method", "GET")
-        if not isinstance(method, str) or method.upper() != "GET":
-            raise ValueError("source.method must be GET for HTTP sources (Phase 5)")
+        if not isinstance(method, str) or method.upper() not in ("GET", "POST"):
+            raise ValueError("source.method must be GET or POST for HTTP sources")
+        if method.upper() == "GET" and source.get("body"):
+            raise ValueError("source.body is only valid when source.method is POST")
+        if source.get("body") is not None and not isinstance(source.get("body"), dict):
+            raise ValueError("source.body must be a mapping when provided")
         hdrs = source.get("headers")
         if hdrs is not None and not isinstance(hdrs, dict):
             raise ValueError("source.headers must be a mapping when provided")
         rk = source.get("records_key")
         if rk is not None and not isinstance(rk, str):
             raise ValueError("source.records_key must be a string when provided")
+        if source.get("allow_single_object") is not None and not isinstance(
+            source.get("allow_single_object"), bool
+        ):
+            raise ValueError("source.allow_single_object must be a boolean when provided")
+        pag = source.get("pagination")
+        if pag is not None:
+            if not isinstance(pag, dict):
+                raise ValueError("source.pagination must be a mapping when provided")
+            if pag.get("enabled") and pag.get("strategy") != "offset_query":
+                raise ValueError("pagination.strategy must be 'offset_query' when enabled")
+            if pag.get("enabled"):
+                for key in ("page_size", "max_requests"):
+                    if key not in pag:
+                        raise ValueError(f"pagination.{key} is required when pagination.enabled=true")
+        rtry = source.get("retry")
+        if rtry is not None:
+            if not isinstance(rtry, dict):
+                raise ValueError("source.retry must be a mapping when provided")
+            if "count" in rtry and int(rtry["count"]) < 1:
+                raise ValueError("source.retry.count must be >= 1")
 
     if target.get("type") != "duckdb":
         raise ValueError("Only target.type='duckdb' is supported")

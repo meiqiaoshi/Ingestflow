@@ -75,6 +75,11 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
                 method=source.get("method", "GET"),
                 headers=source.get("headers"),
                 records_key=source.get("records_key"),
+                body=source.get("body"),
+                allow_single_object=bool(source.get("allow_single_object", False)),
+                timeout_s=float(source.get("timeout_seconds", 120.0)),
+                pagination=source.get("pagination"),
+                retry=source.get("retry"),
             )
         else:
             raise NotImplementedError(f"Unsupported source.type: {src_type}")
