@@ -107,3 +107,30 @@ def test_extract_http_pagination_offset_merges_pages() -> None:
         )
     assert len(df) == 2
     assert list(df["n"]) == [1, 2]
+
+
+def test_extract_http_retry_raises_after_failures() -> None:
+    """
+    Retries should be applied to transient urllib failures.
+    After the retry budget is exhausted, the extractor should raise.
+    """
+    from urllib.error import URLError
+
+    side_effects = [URLError("boom"), URLError("boom"), URLError("boom")]
+
+    with patch(
+        "extractor.http_extractor.urllib.request.urlopen",
+        side_effect=side_effects,
+    ) as mocked:
+        try:
+            extract_http(
+                "https://example.com/x",
+                retry={"count": 3, "backoff_seconds": 0.0},
+            )
+        except ValueError as e:
+            assert "HTTP request failed" in str(e)
+        else:
+            raise AssertionError("Expected ValueError after retries are exhausted")
+
+    # Called once per retry attempt.
+    assert mocked.call_count == 3
