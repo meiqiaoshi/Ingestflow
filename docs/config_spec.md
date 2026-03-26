@@ -89,6 +89,25 @@ source:
 
 Query parameters are merged into `url`; pages are concatenated until a short page or `max_requests`.
 
+### Example (HTTP page pagination)
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  method: GET
+  pagination:
+    enabled: true
+    strategy: page_query
+    page_size: 20
+    max_pages: 50
+    page_param: page
+    page_size_param: per_page
+    start_page: 1
+```
+
+For `page_query`, requests are made page by page until an empty/short page or `max_pages`.
+
 ### Example (HTTP retries)
 
 ```yaml
@@ -113,7 +132,9 @@ Retries apply to transient `urllib` failures (not JSON parse errors).
 - records_key: optional key when the JSON root is an object wrapping the array
 - allow_single_object: when `true`, a single JSON object is loaded as one row
 - timeout_seconds: optional request timeout (default `120`)
-- pagination: optional; `enabled`, `strategy: offset_query`, `page_size`, `max_requests`, optional `limit_param`, `offset_param`, `start_offset`
+- pagination: optional; one of:
+  - `offset_query`: `enabled`, `strategy`, `page_size`, `max_requests`, optional `limit_param`, `offset_param`, `start_offset`
+  - `page_query`: `enabled`, `strategy`, `page_size`, `max_pages`, optional `page_param`, `page_size_param`, `start_page`
 - retry: optional; `count` (≥1), `backoff_seconds`
 
 ---

@@ -109,6 +109,45 @@ def test_extract_http_pagination_offset_merges_pages() -> None:
     assert list(df["n"]) == [1, 2]
 
 
+def test_extract_http_pagination_page_query_merges_pages() -> None:
+    pages = [
+        json.dumps([{"n": 10}, {"n": 11}]),
+        json.dumps([{"n": 12}]),
+    ]
+
+    class FakeResp:
+        def __init__(self, body: str):
+            self._body = body.encode("utf-8")
+
+        def read(self):
+            return self._body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    with patch(
+        "extractor.http_extractor.urllib.request.urlopen",
+        side_effect=[FakeResp(p) for p in pages],
+    ):
+        df = extract_http(
+            "https://example.com/items",
+            pagination={
+                "enabled": True,
+                "strategy": "page_query",
+                "page_size": 2,
+                "max_pages": 10,
+                "page_param": "page",
+                "page_size_param": "per_page",
+                "start_page": 1,
+            },
+        )
+    assert len(df) == 3
+    assert list(df["n"]) == [10, 11, 12]
+
+
 def test_extract_http_retry_raises_after_failures() -> None:
     """
     Retries should be applied to transient urllib failures.

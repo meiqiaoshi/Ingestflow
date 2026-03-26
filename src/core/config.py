@@ -64,12 +64,25 @@ def validate_runtime_config(config: dict) -> None:
         if pag is not None:
             if not isinstance(pag, dict):
                 raise ValueError("source.pagination must be a mapping when provided")
-            if pag.get("enabled") and pag.get("strategy") != "offset_query":
-                raise ValueError("pagination.strategy must be 'offset_query' when enabled")
             if pag.get("enabled"):
-                for key in ("page_size", "max_requests"):
+                strat = pag.get("strategy")
+                if strat not in ("offset_query", "page_query"):
+                    raise ValueError(
+                        "pagination.strategy must be 'offset_query' or 'page_query' when enabled"
+                    )
+                for key in ("page_size",):
                     if key not in pag:
                         raise ValueError(f"pagination.{key} is required when pagination.enabled=true")
+                if strat == "offset_query":
+                    if "max_requests" not in pag:
+                        raise ValueError(
+                            "pagination.max_requests is required for pagination.strategy='offset_query'"
+                        )
+                if strat == "page_query":
+                    if "max_pages" not in pag:
+                        raise ValueError(
+                            "pagination.max_pages is required for pagination.strategy='page_query'"
+                        )
         rtry = source.get("retry")
         if rtry is not None:
             if not isinstance(rtry, dict):

@@ -80,11 +80,11 @@ def _fetch_raw(
 
 
 def _with_retry(
-    fn: Callable[[], T],
+    fn: Callable[[], Any],
     *,
     count: int,
     backoff_seconds: float,
-) -> T:
+) -> Any:
     last: Optional[Exception] = None
     for attempt in range(max(1, count)):
         try:
@@ -158,6 +158,8 @@ def extract_http(
     - POST: optional JSON ``body``; use ``allow_single_object`` when the API returns one object.
     - ``pagination.strategy: offset_query`` merges limit/offset query params and loops until
       a short page or ``max_requests`` is reached.
+    - ``pagination.strategy: page_query`` merges page/page_size query params and loops until
+      a short page or ``max_pages`` is reached.
     - ``retry``: ``count`` (default 1) and ``backoff_seconds`` (default 1.0) for transient failures.
     """
     m = (method or "GET").upper()
@@ -181,39 +183,69 @@ def extract_http(
         )
 
     strat = pagination.get("strategy")
-    if strat != "offset_query":
-        raise ValueError("pagination.strategy must be 'offset_query'")
-
     page_size = int(pagination["page_size"])
-    limit_param = str(pagination.get("limit_param", "_limit"))
-    offset_param = str(pagination.get("offset_param", "_start"))
-    max_requests = int(pagination.get("max_requests", 50))
-    start_offset = int(pagination.get("start_offset", 0))
-
     frames: List[pd.DataFrame] = []
-    offset = start_offset
-    for _ in range(max_requests):
-        page_url = _merge_query(
-            url,
-            {limit_param: page_size, offset_param: offset},
-        )
-        chunk = _fetch_dataframe_once(
-            page_url,
-            method=m,
-            headers=headers,
-            body=body,
-            records_key=records_key,
-            allow_single_object=allow_single_object,
-            timeout_s=timeout_s,
-            retry_count=rc,
-            retry_backoff_s=backoff,
-        )
-        if chunk.empty:
-            break
-        frames.append(chunk)
-        if len(chunk) < page_size:
-            break
-        offset += page_size
+
+    if strat == "offset_query":
+        limit_param = str(pagination.get("limit_param", "_limit"))
+        offset_param = str(pagination.get("offset_param", "_start"))
+        max_requests = int(pagination.get("max_requests", 50))
+        start_offset = int(pagination.get("start_offset", 0))
+
+        offset = start_offset
+        for _ in range(max_requests):
+            page_url = _merge_query(
+                url,
+                {limit_param: page_size, offset_param: offset},
+            )
+            chunk = _fetch_dataframe_once(
+                page_url,
+                method=m,
+                headers=headers,
+                body=body,
+                records_key=records_key,
+                allow_single_object=allow_single_object,
+                timeout_s=timeout_s,
+                retry_count=rc,
+                retry_backoff_s=backoff,
+            )
+            if chunk.empty:
+                break
+            frames.append(chunk)
+            if len(chunk) < page_size:
+                break
+            offset += page_size
+    elif strat == "page_query":
+        page_param = str(pagination.get("page_param", "page"))
+        page_size_param = str(pagination.get("page_size_param", "page_size"))
+        max_pages = int(pagination.get("max_pages", 50))
+        start_page = int(pagination.get("start_page", 1))
+
+        page = start_page
+        for _ in range(max_pages):
+            page_url = _merge_query(
+                url,
+                {page_param: page, page_size_param: page_size},
+            )
+            chunk = _fetch_dataframe_once(
+                page_url,
+                method=m,
+                headers=headers,
+                body=body,
+                records_key=records_key,
+                allow_single_object=allow_single_object,
+                timeout_s=timeout_s,
+                retry_count=rc,
+                retry_backoff_s=backoff,
+            )
+            if chunk.empty:
+                break
+            frames.append(chunk)
+            if len(chunk) < page_size:
+                break
+            page += 1
+    else:
+        raise ValueError("pagination.strategy must be 'offset_query' or 'page_query'")
 
     if not frames:
         return pd.DataFrame()

@@ -78,6 +78,41 @@ def test_http_post_source_ok() -> None:
     )
 
 
+def test_http_page_query_source_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "http",
+                "url": "https://example.com/api",
+                "method": "GET",
+                "pagination": {
+                    "enabled": True,
+                    "strategy": "page_query",
+                    "page_size": 10,
+                    "max_pages": 5,
+                },
+            }
+        )
+    )
+
+
+def test_http_page_query_requires_max_pages() -> None:
+    cfg = _minimal(
+        source={
+            "type": "http",
+            "url": "https://example.com/api",
+            "method": "GET",
+            "pagination": {
+                "enabled": True,
+                "strategy": "page_query",
+                "page_size": 10,
+            },
+        }
+    )
+    with pytest.raises(ValueError, match="max_pages"):
+        validate_runtime_config(cfg)
+
+
 def test_unknown_source_type_rejected() -> None:
     cfg = _minimal(source={"type": "api", "path": "x"})
     with pytest.raises(ValueError, match="source.type must be"):
