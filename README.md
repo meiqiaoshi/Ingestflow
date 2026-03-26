@@ -66,6 +66,8 @@ pytest
 
 Includes mocks for DuckDB load/metadata so CI does not require a real `warehouse.duckdb` write.
 
+On GitHub, pushes and pull requests to `main` run the same suite via **GitHub Actions** (`.github/workflows/ci.yml`).
+
 By default DuckDB writes to **`warehouse.duckdb`** in the project root (override with `target.db_path` in YAML). That file may contain:
 
 - **Business tables** (e.g. `raw_orders` from the sample config)
