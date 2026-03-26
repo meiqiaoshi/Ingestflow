@@ -7,9 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from core.config import load_config
 from core.logging_config import configure_logging
-from extractor.csv_extractor import extract_csv
-from extractor.http_extractor import extract_http
-from extractor.parquet_extractor import extract_parquet
+from extractor.dispatcher import extract_source, source_fingerprint
 from transformer.basic_transformer import apply_transformations
 from loader.duckdb_loader import load_to_duckdb
 from loader.incremental_state import (
@@ -22,14 +20,6 @@ from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
 logger = logging.getLogger(__name__)
-
-
-def _source_fingerprint(source: dict, src_type: str) -> str:
-    if src_type in ("csv", "parquet"):
-        return source["path"]
-    if src_type == "http":
-        return source["url"]
-    raise ValueError(f"Unsupported source.type for pipeline key: {src_type}")
 
 
 def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
@@ -65,24 +55,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
     exc_info = None
 
     try:
-        if src_type == "csv":
-            df = extract_csv(source["path"])
-        elif src_type == "parquet":
-            df = extract_parquet(source["path"])
-        elif src_type == "http":
-            df = extract_http(
-                source["url"],
-                method=source.get("method", "GET"),
-                headers=source.get("headers"),
-                records_key=source.get("records_key"),
-                body=source.get("body"),
-                allow_single_object=bool(source.get("allow_single_object", False)),
-                timeout_s=float(source.get("timeout_seconds", 120.0)),
-                pagination=source.get("pagination"),
-                retry=source.get("retry"),
-            )
-        else:
-            raise NotImplementedError(f"Unsupported source.type: {src_type}")
+        df = extract_source(source)
 
         # transform
         df = apply_transformations(df, config)
@@ -97,7 +70,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
                 )
 
             pipeline_key = (
-                f"{src_type}:{_source_fingerprint(source, src_type)}::"
+                f"{src_type}:{source_fingerprint(source)}::"
                 f"{target['table']}::{watermark_column}"
             )
             last_checkpoint = get_last_checkpoint(db_path=db_path, pipeline_key=pipeline_key)
