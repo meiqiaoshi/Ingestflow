@@ -25,6 +25,9 @@ dist/
 # Local DB (pipeline 生成的库)
 *.duckdb
 
+# Sample parquet generated on demand
+data/sample_orders.parquet
+
 # IDE
 .idea/
 .vscode/

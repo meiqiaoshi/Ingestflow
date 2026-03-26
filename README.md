@@ -30,6 +30,18 @@ Run the sample pipeline:
 python main.py --config configs/sample.yaml
 ```
 
+Generate the sample Parquet file before running the Parquet pipeline:
+
+```bash
+python scripts/generate_sample_parquet.py
+```
+
+Then run the Parquet pipeline:
+
+```bash
+python main.py --config configs/sample_parquet.yaml
+```
+
 Optional logging:
 
 ```bash
