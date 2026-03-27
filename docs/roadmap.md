@@ -19,7 +19,7 @@ Snapshot of how the phases map to the codebase today:
 | **3** | Validation (`required_columns`, `null_checks`, `type_checks`) | **Delivered** |
 | **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
 | **5** | Parquet + HTTP JSON (GET/POST, retries, pagination), extractor **dispatcher** | **Partial** — OAuth / HMAC / streaming, shared connector interface, DB extractor still **planned** |
-| **6** | Tests (`pytest`), README, `--verbose` / `--quiet` / `--dry-run`, GitHub Actions CI | **Partial** — integration tests (temp DuckDB end-to-end), `.env` / secrets workflow **planned** |
+| **6** | Tests (`pytest`), README, `--verbose` / `--quiet` / `--dry-run`, GitHub Actions CI, `.env` + `${VAR}` for HTTP headers/body | **Partial** — integration tests (temp DuckDB end-to-end) **planned** |
 | **7** | Run history UX, dashboards, observability hooks | **Not started** |
 
 ---
@@ -244,7 +244,7 @@ The original sequence still reflects dependencies (each phase builds on the last
 3. Phase 3 — Validation Layer *(done)*
 4. Phase 4 — Incremental Loading *(done)*
 5. Phase 5 — Additional Connectors *(in progress — finish planned connectors / auth patterns)*
-6. Phase 6 — Developer Experience Improvements *(in progress — integration tests, `.env`)*
+6. Phase 6 — Developer Experience Improvements *(in progress — integration tests)*
 7. Phase 7 — Monitoring and Extension Layer *(next)*
 
 ---
@@ -253,7 +253,7 @@ The original sequence still reflects dependencies (each phase builds on the last
 
 Near-term priorities:
 
-1. **Phase 6** — `.env` or environment-based secrets for HTTP headers/tokens (no secrets in YAML); optional **integration tests** that run the full pipeline against a temporary DuckDB file.
+1. **Phase 6** — optional **integration tests** that run the full pipeline against a temporary DuckDB file; further CLI/DX polish as needed.
 2. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
 3. **Phase 7** — lightweight **run history** (e.g. CLI query/filter on `ingestion_runs` by `config_path` or time range) before any heavier dashboard work.
 

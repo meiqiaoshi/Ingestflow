@@ -121,13 +121,35 @@ source:
 
 Retries apply to transient `urllib` failures (not JSON parse errors).
 
+### Environment variables and `.env`
+
+On startup, **`main.py` loads a `.env` file** from the current working directory (if present) via `python-dotenv`. Variables set in the shell environment take precedence over `.env`.
+
+For **`source.type: http`**, string values in **`headers`** and **`body`** may use placeholders:
+
+- **`${VAR_NAME}`** — replaced with the value of environment variable `VAR_NAME` at run time.
+
+Example:
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  headers:
+    Authorization: Bearer ${API_TOKEN}
+```
+
+If a placeholder references a variable that is not set, the pipeline fails with a clear error.
+
+Do not commit real secrets: keep `.env` out of version control (already listed in `.gitignore`).
+
 ### Fields
 
 - type: source type (`csv`, `parquet`, `http`; more connectors planned)
 - path: file path (for `csv` and `parquet`)
 - url: HTTPS URL (for `http`)
 - method: `GET` or `POST`
-- body: JSON object for `POST` (optional; defaults to `{}`)
+- body: JSON object for `POST` (optional; defaults to `{}`; string values may include ``${VAR}``)
 - headers: optional mapping of request headers
 - records_key: optional key when the JSON root is an object wrapping the array
 - allow_single_object: when `true`, a single JSON object is loaded as one row

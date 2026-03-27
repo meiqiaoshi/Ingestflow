@@ -31,6 +31,24 @@ def test_extract_source_dispatches_http(monkeypatch: pytest.MonkeyPatch) -> None
     pd.testing.assert_frame_equal(out, expected)
 
 
+def test_extract_source_http_resolves_env_in_headers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("INGESTFLOW_DISPATCHER_HDR", "token-123")
+    expected = pd.DataFrame({"id": [1]})
+    mock = MagicMock(return_value=expected)
+    monkeypatch.setattr(dispatcher, "extract_http", mock)
+    dispatcher.extract_source(
+        {
+            "type": "http",
+            "url": "https://example.com/api",
+            "headers": {"Authorization": "Bearer ${INGESTFLOW_DISPATCHER_HDR}"},
+        }
+    )
+    kwargs = mock.call_args.kwargs
+    assert kwargs["headers"] == {"Authorization": "Bearer token-123"}
+
+
 def test_extract_source_unknown_type() -> None:
     with pytest.raises(NotImplementedError, match="Unsupported source.type"):
         dispatcher.extract_source({"type": "db"})

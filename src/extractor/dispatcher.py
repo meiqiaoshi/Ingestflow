@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
+from core.env_resolve import resolve_env_in_obj
 from extractor.csv_extractor import extract_csv
 from extractor.http_extractor import extract_http
 from extractor.parquet_extractor import extract_parquet
@@ -19,12 +20,18 @@ def extract_source(source: Dict[str, Any]) -> pd.DataFrame:
     if src_type == "parquet":
         return extract_parquet(source["path"])
     if src_type == "http":
+        headers: Optional[Dict[str, Any]] = source.get("headers")
+        if headers is not None:
+            headers = resolve_env_in_obj(dict(headers))
+        body: Optional[Dict[str, Any]] = source.get("body")
+        if body is not None:
+            body = resolve_env_in_obj(dict(body))
         return extract_http(
             source["url"],
             method=source.get("method", "GET"),
-            headers=source.get("headers"),
+            headers=headers,
             records_key=source.get("records_key"),
-            body=source.get("body"),
+            body=body,
             allow_single_object=bool(source.get("allow_single_object", False)),
             timeout_s=float(source.get("timeout_seconds", 120.0)),
             pagination=source.get("pagination"),

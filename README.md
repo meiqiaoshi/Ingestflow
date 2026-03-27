@@ -57,6 +57,8 @@ python main.py --config configs/sample.yaml --dry-run
 
 Logs go to **stderr** at `INFO` by default.
 
+Optional **`.env`** in the project directory sets environment variables before config load (`python-dotenv`). For HTTP sources, use **`${VAR_NAME}`** in `source.headers` or `source.body` string values to inject secrets without putting them in YAML (see `docs/config_spec.md`).
+
 ### Tests
 
 ```bash

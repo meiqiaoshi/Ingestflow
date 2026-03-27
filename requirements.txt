@@ -2,3 +2,4 @@ pandas
 pyyaml
 duckdb
 pyarrow
+python-dotenv>=1.0

@@ -3,6 +3,8 @@ import logging
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from core.config import load_config
@@ -20,6 +22,16 @@ from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
 logger = logging.getLogger(__name__)
+
+
+def _source_label(source: dict) -> str:
+    """Human-readable source description for logs and run metadata."""
+    stype = source.get("type")
+    if stype in ("csv", "parquet"):
+        return str(source.get("path") or "")
+    if stype == "http":
+        return str(source.get("url") or "")
+    return str(source.get("path") or source.get("url") or "")
 
 
 def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
@@ -118,7 +130,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
                     started_at=started_at,
                     finished_at=finished_at,
                     status=status,
-                    source_path=source["path"],
+                    source_path=_source_label(source),
                     target_table=target["table"],
                     rows_loaded=rows_loaded,
                     error_message=error_message,
@@ -158,6 +170,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
 
 
 if __name__ == "__main__":
+    load_dotenv()
     parser = argparse.ArgumentParser(description="IngestFlow CSV → DuckDB pipeline")
     parser.add_argument("--config", required=True, help="Path to YAML pipeline config")
     parser.add_argument(
