@@ -150,7 +150,7 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
     logger.info("Run ID: %s", run_id)
     logger.info("Status: %s", status)
     logger.info("Duration (s): %.3f", duration_s)
-    logger.info("Source: %s", source["path"])
+    logger.info("Source: %s", _source_label(source))
     logger.info("Target table: %s", target["table"])
     logger.info("Load mode: %s", load_mode)
     if df is not None:
