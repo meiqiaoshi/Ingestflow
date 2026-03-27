@@ -213,28 +213,9 @@ See `docs/config_spec.md` for the full YAML schema.
 
 ---
 
-## 🛣️ Roadmap
+## Roadmap
 
-### Phase 1
-- CSV ingestion
-- Basic transformation
-- Load into DuckDB
-- Run metadata logging
-
-### Phase 2
-- API connector
-- Schema validation
-- Error handling
-
-### Phase 3
-- Incremental loading
-- State management
-- Retry mechanism
-
-### Phase 4
-- CLI tools
-- Dashboard (Streamlit)
-- Docker support
+Planned phases, **implementation status**, and **current focus** are documented in [`docs/roadmap.md`](docs/roadmap.md). The README stays user-facing; the roadmap file is the source of truth for what is shipped versus planned.
 
 ---
 

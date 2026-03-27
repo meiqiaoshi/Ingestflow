@@ -8,6 +8,22 @@ The goal is to build the project incrementally, starting from a minimal but work
 
 ---
 
+## Implementation status
+
+Snapshot of how the phases map to the codebase today:
+
+| Phase | Theme | Status |
+|-------|--------|--------|
+| **1** | CSV → DuckDB pipeline, YAML config, transform, CLI | **Delivered** |
+| **2** | Run metadata (`ingestion_runs`), logging, execution summary | **Delivered** |
+| **3** | Validation (`required_columns`, `null_checks`, `type_checks`) | **Delivered** |
+| **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
+| **5** | Parquet + HTTP JSON (GET/POST, retries, pagination), extractor **dispatcher** | **Partial** — OAuth / HMAC / streaming, shared connector interface, DB extractor still **planned** |
+| **6** | Tests (`pytest`), README, `--verbose` / `--quiet` / `--dry-run`, GitHub Actions CI | **Partial** — integration tests (temp DuckDB end-to-end), `.env` / secrets workflow **planned** |
+| **7** | Run history UX, dashboards, observability hooks | **Not started** |
+
+---
+
 ## Phase 1 — Minimal Working Ingestion Pipeline
 
 ### Objective
@@ -221,22 +237,24 @@ Prepare IngestFlow for richer operational visibility and future integrations.
 
 ## Recommended Development Order
 
-The recommended implementation order is:
+The original sequence still reflects dependencies (each phase builds on the last). Phases **1–4** are in place; ongoing work follows **5 → 6 → 7** for connectors, developer experience, and operations.
 
-1. Phase 1 — Minimal Working Ingestion Pipeline
-2. Phase 2 — Metadata Tracking and Audit Logging
-3. Phase 3 — Validation Layer
-4. Phase 4 — Incremental Loading
-5. Phase 5 — Additional Connectors
-6. Phase 6 — Developer Experience Improvements
-7. Phase 7 — Monitoring and Extension Layer
+1. Phase 1 — Minimal Working Ingestion Pipeline *(done)*
+2. Phase 2 — Metadata Tracking and Audit Logging *(done)*
+3. Phase 3 — Validation Layer *(done)*
+4. Phase 4 — Incremental Loading *(done)*
+5. Phase 5 — Additional Connectors *(in progress — finish planned connectors / auth patterns)*
+6. Phase 6 — Developer Experience Improvements *(in progress — integration tests, `.env`)*
+7. Phase 7 — Monitoring and Extension Layer *(next)*
 
 ---
 
-## Current Focus
+## Current focus
 
-The immediate priority is:
+Near-term priorities:
 
-> Build a clean, minimal, end-to-end CSV → DuckDB ingestion pipeline with config-driven execution.
+1. **Phase 6** — `.env` or environment-based secrets for HTTP headers/tokens (no secrets in YAML); optional **integration tests** that run the full pipeline against a temporary DuckDB file.
+2. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
+3. **Phase 7** — lightweight **run history** (e.g. CLI query/filter on `ingestion_runs` by `config_path` or time range) before any heavier dashboard work.
 
-This will serve as the foundation for all later features.
+The CSV → DuckDB baseline and config-driven core are no longer the blocking goal; they are established.
