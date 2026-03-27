@@ -27,7 +27,17 @@ pip install -r requirements.txt
 Run the sample pipeline:
 
 ```bash
-python main.py --config configs/sample.yaml
+python main.py run --config configs/sample.yaml
+```
+
+The same works as **`python main.py --config configs/sample.yaml`** (legacy; `run` is inserted automatically).
+
+List recent runs stored in the warehouse DuckDB (table `ingestion_runs`):
+
+```bash
+python main.py runs list
+python main.py runs list --db warehouse.duckdb --limit 10 --status success
+python main.py runs list --config-contains sample.yaml
 ```
 
 Generate the sample Parquet file before running the Parquet pipeline:
@@ -39,20 +49,20 @@ python scripts/generate_sample_parquet.py
 Then run the Parquet pipeline:
 
 ```bash
-python main.py --config configs/sample_parquet.yaml
+python main.py run --config configs/sample_parquet.yaml
 ```
 
 Optional logging:
 
 ```bash
-python main.py --config configs/sample.yaml --verbose
-python main.py --config configs/sample.yaml --quiet
+python main.py run --config configs/sample.yaml --verbose
+python main.py run --config configs/sample.yaml --quiet
 ```
 
 Dry run (no DuckDB **writes**: no load, no checkpoint update, no `ingestion_runs` insert; incremental mode may still **read** the existing checkpoint to preview row counts):
 
 ```bash
-python main.py --config configs/sample.yaml --dry-run
+python main.py run --config configs/sample.yaml --dry-run
 ```
 
 Logs go to **stderr** at `INFO` by default.
@@ -208,7 +218,7 @@ load:
 ## ▶️ Usage
 
 ```bash
-python main.py --config configs/sample.yaml
+python main.py run --config configs/sample.yaml
 ```
 
 See `docs/config_spec.md` for the full YAML schema.

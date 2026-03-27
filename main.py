@@ -18,6 +18,7 @@ from loader.incremental_state import (
     max_checkpoint_value,
     upsert_checkpoint,
 )
+from metadata.run_queries import list_ingestion_runs
 from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
@@ -169,22 +170,100 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
         raise exc_info[1].with_traceback(exc_info[2])
 
 
-if __name__ == "__main__":
-    load_dotenv()
-    parser = argparse.ArgumentParser(description="IngestFlow CSV → DuckDB pipeline")
-    parser.add_argument("--config", required=True, help="Path to YAML pipeline config")
-    parser.add_argument(
+def _ensure_run_subcommand(argv: list[str]) -> list[str]:
+    """Legacy: ``python main.py --config ...`` → ``python main.py run --config ...``."""
+    if len(argv) < 2:
+        return argv
+    if argv[1] in ("-h", "--help", "runs", "run"):
+        return argv
+    if "--config" in argv[1:]:
+        return [argv[0], "run"] + argv[1:]
+    return argv
+
+
+def _cmd_runs_list(args: argparse.Namespace) -> None:
+    db_path = args.db
+    if not Path(db_path).resolve().exists():
+        print(f"No database file at {db_path!r}", file=sys.stderr)
+        sys.exit(1)
+    df = list_ingestion_runs(
+        db_path,
+        limit=args.limit,
+        status=args.status,
+        config_path_contains=args.config_contains,
+    )
+    if df.empty:
+        print("(no rows)", file=sys.stderr)
+        return
+    print(df.to_string(index=False))
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="IngestFlow — config-driven ingestion into DuckDB",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_run = sub.add_parser("run", help="Run ingestion pipeline")
+    p_run.add_argument(
+        "--config", required=True, help="Path to YAML pipeline config"
+    )
+    p_run.add_argument(
         "--verbose", "-v", action="store_true", help="Debug logging"
     )
-    parser.add_argument(
+    p_run.add_argument(
         "--quiet", "-q", action="store_true", help="Warnings and errors only"
     )
-    parser.add_argument(
+    p_run.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate and transform only; do not load, update checkpoints, or write run metadata",
     )
-    args = parser.parse_args()
 
-    configure_logging(verbose=args.verbose, quiet=args.quiet)
-    run_pipeline(args.config, dry_run=args.dry_run)
+    p_runs = sub.add_parser("runs", help="Inspect ingestion run history")
+    runs_sub = p_runs.add_subparsers(dest="runs_cmd", required=True)
+    p_list = runs_sub.add_parser("list", help="List recent runs from ingestion_runs")
+    p_list.add_argument(
+        "--db",
+        default="warehouse.duckdb",
+        help="DuckDB file path (default: warehouse.duckdb)",
+    )
+    p_list.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="Max rows to print (default: 20, max: 500)",
+    )
+    p_list.add_argument(
+        "--status",
+        help="Filter by status (e.g. success, failed)",
+    )
+    p_list.add_argument(
+        "--config-contains",
+        dest="config_contains",
+        metavar="TEXT",
+        help="Filter rows whose config_path contains TEXT (case-insensitive)",
+    )
+    return parser
+
+
+def main() -> None:
+    load_dotenv()
+    argv = _ensure_run_subcommand(sys.argv)
+    parser = _build_parser()
+    args = parser.parse_args(argv[1:])
+
+    if args.command == "run":
+        configure_logging(verbose=args.verbose, quiet=args.quiet)
+        run_pipeline(args.config, dry_run=args.dry_run)
+    elif args.command == "runs":
+        if args.runs_cmd == "list":
+            _cmd_runs_list(args)
+        else:
+            parser.error("Unknown runs subcommand")
+    else:
+        parser.error("Unknown command")
+
+
+if __name__ == "__main__":
+    main()

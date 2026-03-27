@@ -20,7 +20,7 @@ Snapshot of how the phases map to the codebase today:
 | **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
 | **5** | Parquet + HTTP JSON (GET/POST, retries, pagination), extractor **dispatcher** | **Partial** — OAuth / HMAC / streaming, shared connector interface, DB extractor still **planned** |
 | **6** | Tests (`pytest`), README, `--verbose` / `--quiet` / `--dry-run`, GitHub Actions CI, `.env` + `${VAR}` for HTTP headers/body, **integration test** (real DuckDB file for CSV replace) | **Partial** — more scenarios (HTTP, incremental) optional |
-| **7** | Run history UX, dashboards, observability hooks | **Not started** |
+| **7** | **`python main.py runs list`** (filter by `--status`, `--config-contains`), dashboards TBD | **Partial** — CLI history; Streamlit / external hooks **planned** |
 
 ---
 
@@ -245,7 +245,7 @@ The original sequence still reflects dependencies (each phase builds on the last
 4. Phase 4 — Incremental Loading *(done)*
 5. Phase 5 — Additional Connectors *(in progress — finish planned connectors / auth patterns)*
 6. Phase 6 — Developer Experience Improvements *(in progress — expand integration coverage if needed)*
-7. Phase 7 — Monitoring and Extension Layer *(next)*
+7. Phase 7 — Monitoring and Extension Layer *(in progress — CLI run history; optional dashboard)*
 
 ---
 
@@ -253,8 +253,8 @@ The original sequence still reflects dependencies (each phase builds on the last
 
 Near-term priorities:
 
-1. **Phase 6** — optional **more integration tests** (HTTP mock + real DB, or incremental second run); further CLI/DX polish as needed.
-2. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
-3. **Phase 7** — lightweight **run history** (e.g. CLI query/filter on `ingestion_runs` by `config_path` or time range) before any heavier dashboard work.
+1. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
+2. **Phase 6** — optional **more integration tests** (HTTP mock + real DB, or incremental second run); further CLI/DX polish as needed.
+3. **Phase 7** — optional **dashboard** or richer **time-range** filters on `runs list`; observability export formats.
 
 The CSV → DuckDB baseline and config-driven core are no longer the blocking goal; they are established.
