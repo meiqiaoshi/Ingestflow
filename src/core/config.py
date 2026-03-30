@@ -34,8 +34,8 @@ def validate_runtime_config(config: dict) -> None:
     incremental = load.get("incremental", {}) or {}
 
     src_type = source.get("type")
-    if src_type not in ("csv", "parquet", "http"):
-        raise ValueError("source.type must be 'csv', 'parquet', or 'http'")
+    if src_type not in ("csv", "parquet", "http", "postgres"):
+        raise ValueError("source.type must be 'csv', 'parquet', 'http', or 'postgres'")
 
     if src_type in ("csv", "parquet"):
         if not isinstance(source.get("path"), str) or not source.get("path"):
@@ -89,6 +89,14 @@ def validate_runtime_config(config: dict) -> None:
                 raise ValueError("source.retry must be a mapping when provided")
             if "count" in rtry and int(rtry["count"]) < 1:
                 raise ValueError("source.retry.count must be >= 1")
+
+    elif src_type == "postgres":
+        dsn = source.get("dsn")
+        if not isinstance(dsn, str) or not str(dsn).strip():
+            raise ValueError("source.dsn must be a non-empty string for postgres sources")
+        q = source.get("query")
+        if not isinstance(q, str) or not str(q).strip():
+            raise ValueError("source.query must be a non-empty SQL string for postgres sources")
 
     if target.get("type") != "duckdb":
         raise ValueError("Only target.type='duckdb' is supported")

@@ -125,7 +125,7 @@ Retries apply to transient `urllib` failures (not JSON parse errors).
 
 On startup, **`main.py` loads a `.env` file** from the current working directory (if present) via `python-dotenv`. Variables set in the shell environment take precedence over `.env`.
 
-For **`source.type: http`**, string values in **`headers`** and **`body`** may use placeholders:
+For **`source.type: http`**, string values in **`headers`** and **`body`** may use placeholders. The same ``${VAR_NAME}`` syntax applies to **`source.type: postgres`** fields **`dsn`** and **`query`**.
 
 - **`${VAR_NAME}`** — replaced with the value of environment variable `VAR_NAME` at run time.
 
@@ -143,9 +143,26 @@ If a placeholder references a variable that is not set, the pipeline fails with 
 
 Do not commit real secrets: keep `.env` out of version control (already listed in `.gitignore`).
 
+### Example (PostgreSQL)
+
+Read-only **single query** into a DataFrame (requires **`psycopg2-binary`** in `requirements.txt`).
+
+```yaml
+source:
+  type: postgres
+  dsn: ${POSTGRES_DSN}
+  query: |
+    SELECT id, amount, created_at
+    FROM public.orders
+    WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+```
+
+- **`dsn`**: libpq connection string (placeholders ``${VAR}`` are expanded like HTTP headers).
+- **`query`**: trusted SQL (operator-controlled); may also use ``${VAR}`` in the string.
+
 ### Fields
 
-- type: source type (`csv`, `parquet`, `http`; more connectors planned)
+- type: source type (`csv`, `parquet`, `http`, `postgres`)
 - path: file path (for `csv` and `parquet`)
 - url: HTTPS URL (for `http`)
 - method: `GET` or `POST`
@@ -158,6 +175,8 @@ Do not commit real secrets: keep `.env` out of version control (already listed i
   - `offset_query`: `enabled`, `strategy`, `page_size`, `max_requests`, optional `limit_param`, `offset_param`, `start_offset`
   - `page_query`: `enabled`, `strategy`, `page_size`, `max_pages`, optional `page_param`, `page_size_param`, `start_page`
 - retry: optional; `count` (≥1), `backoff_seconds`
+- dsn: PostgreSQL connection string (for `postgres`; ``${VAR}`` allowed)
+- query: SQL string for `postgres` (``${VAR}`` allowed)
 
 ---
 

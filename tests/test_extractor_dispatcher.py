@@ -60,3 +60,27 @@ def test_source_fingerprint() -> None:
         dispatcher.source_fingerprint({"type": "http", "url": "https://x/y"})
         == "https://x/y"
     )
+    fp = dispatcher.source_fingerprint(
+        {
+            "type": "postgres",
+            "dsn": "postgresql://localhost/db",
+            "query": "SELECT 1",
+        }
+    )
+    assert fp.startswith("postgres:")
+    assert len(fp) == len("postgres:") + 16
+
+
+def test_extract_source_dispatches_postgres(monkeypatch: pytest.MonkeyPatch) -> None:
+    expected = pd.DataFrame({"id": [1]})
+    mock = MagicMock(return_value=expected)
+    monkeypatch.setattr(dispatcher, "extract_postgres", mock)
+    out = dispatcher.extract_source(
+        {
+            "type": "postgres",
+            "dsn": "postgresql://localhost/db",
+            "query": "SELECT 1",
+        }
+    )
+    mock.assert_called_once()
+    pd.testing.assert_frame_equal(out, expected)

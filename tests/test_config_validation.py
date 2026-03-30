@@ -117,3 +117,27 @@ def test_unknown_source_type_rejected() -> None:
     cfg = _minimal(source={"type": "api", "path": "x"})
     with pytest.raises(ValueError, match="source.type must be"):
         validate_runtime_config(cfg)
+
+
+def test_postgres_source_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "postgres",
+                "dsn": "postgresql://localhost:5432/db",
+                "query": "SELECT id, name FROM public.orders LIMIT 10",
+            }
+        )
+    )
+
+
+def test_postgres_requires_query() -> None:
+    cfg = _minimal(
+        source={
+            "type": "postgres",
+            "dsn": "postgresql://localhost:5432/db",
+            "query": "",
+        }
+    )
+    with pytest.raises(ValueError, match="source.query"):
+        validate_runtime_config(cfg)

@@ -46,6 +46,9 @@ def _source_label(source: dict) -> str:
         return str(source.get("path") or "")
     if stype == "http":
         return str(source.get("url") or "")
+    if stype == "postgres":
+        q = str(source.get("query") or "")
+        return "postgres:" + (q[:120] + ("..." if len(q) > 120 else ""))
     return str(source.get("path") or source.get("url") or "")
 
 

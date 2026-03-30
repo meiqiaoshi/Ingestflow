@@ -97,8 +97,9 @@ By default DuckDB writes to **`warehouse.duckdb`** in the project root (override
   - CSV files
   - Parquet files (`pyarrow`)
   - HTTP JSON (`source.type: http`, GET/POST, pagination, retries, stdlib)
-  - REST APIs (auth / POST — planned)
-  - Databases (planned)
+  - PostgreSQL read (`source.type: postgres`, `dsn` + `query`, `psycopg2-binary`)
+  - REST APIs (OAuth / HMAC — planned)
+  - Other databases (planned)
 
 - ⚙️ **Config-Driven Pipelines**
   - Define ingestion logic using YAML/JSON configs
