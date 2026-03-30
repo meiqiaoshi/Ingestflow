@@ -1,4 +1,5 @@
 import argparse
+import csv
 import logging
 import sys
 from pathlib import Path
@@ -23,6 +24,19 @@ from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
 logger = logging.getLogger(__name__)
+
+_RUNS_LIST_CSV_COLUMNS = [
+    "run_id",
+    "started_at",
+    "finished_at",
+    "status",
+    "source_path",
+    "target_table",
+    "rows_loaded",
+    "load_mode",
+    "incremental_enabled",
+    "config_path",
+]
 
 
 def _source_label(source: dict) -> str:
@@ -181,6 +195,23 @@ def _ensure_run_subcommand(argv: list[str]) -> list[str]:
     return argv
 
 
+def _print_runs_df(df, fmt: str) -> None:
+    """Write run rows to stdout (``table`` | ``json`` | ``csv``)."""
+    if fmt == "json":
+        print(
+            df.to_json(
+                orient="records",
+                date_format="iso",
+                default_handler=str,
+            )
+        )
+        return
+    if fmt == "csv":
+        df.to_csv(sys.stdout, index=False, lineterminator="\n")
+        return
+    print(df.to_string(index=False))
+
+
 def _cmd_runs_list(args: argparse.Namespace) -> None:
     db_path = args.db
     if not Path(db_path).resolve().exists():
@@ -199,10 +230,17 @@ def _cmd_runs_list(args: argparse.Namespace) -> None:
         since=since,
         until=until,
     )
+    out_fmt = args.format
     if df.empty:
-        print("(no rows)", file=sys.stderr)
+        if out_fmt == "json":
+            print("[]")
+        elif out_fmt == "csv":
+            w = csv.writer(sys.stdout, lineterminator="\n")
+            w.writerow(_RUNS_LIST_CSV_COLUMNS)
+        else:
+            print("(no rows)", file=sys.stderr)
         return
-    print(df.to_string(index=False))
+    _print_runs_df(df, out_fmt)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -260,6 +298,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--until",
         metavar="WHEN",
         help="Include runs with finished_at <= WHEN (ISO 8601 date or datetime)",
+    )
+    p_list.add_argument(
+        "--format",
+        choices=("table", "json", "csv"),
+        default="table",
+        help="Output format (default: table)",
     )
     return parser
 
