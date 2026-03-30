@@ -38,6 +38,7 @@ List recent runs stored in the warehouse DuckDB (table `ingestion_runs`):
 python main.py runs list
 python main.py runs list --db warehouse.duckdb --limit 10 --status success
 python main.py runs list --config-contains sample.yaml
+python main.py runs list --since 2024-01-01 --until 2025-12-31
 ```
 
 Generate the sample Parquet file before running the Parquet pipeline:

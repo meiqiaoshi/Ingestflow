@@ -18,7 +18,7 @@ from loader.incremental_state import (
     max_checkpoint_value,
     upsert_checkpoint,
 )
-from metadata.run_queries import list_ingestion_runs
+from metadata.run_queries import list_ingestion_runs, parse_iso_datetime
 from metadata.run_tracker import create_run_id, record_run, utc_now
 from validator.basic_validator import validate_data
 
@@ -186,11 +186,18 @@ def _cmd_runs_list(args: argparse.Namespace) -> None:
     if not Path(db_path).resolve().exists():
         print(f"No database file at {db_path!r}", file=sys.stderr)
         sys.exit(1)
+    since = parse_iso_datetime(args.since) if args.since else None
+    until = parse_iso_datetime(args.until) if args.until else None
+    if since is not None and until is not None and since > until:
+        print("--since must be on or before --until", file=sys.stderr)
+        sys.exit(2)
     df = list_ingestion_runs(
         db_path,
         limit=args.limit,
         status=args.status,
         config_path_contains=args.config_contains,
+        since=since,
+        until=until,
     )
     if df.empty:
         print("(no rows)", file=sys.stderr)
@@ -243,6 +250,16 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="config_contains",
         metavar="TEXT",
         help="Filter rows whose config_path contains TEXT (case-insensitive)",
+    )
+    p_list.add_argument(
+        "--since",
+        metavar="WHEN",
+        help="Include runs with finished_at >= WHEN (ISO 8601 date or datetime)",
+    )
+    p_list.add_argument(
+        "--until",
+        metavar="WHEN",
+        help="Include runs with finished_at <= WHEN (ISO 8601 date or datetime)",
     )
     return parser
 

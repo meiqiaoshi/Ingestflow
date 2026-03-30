@@ -20,7 +20,7 @@ Snapshot of how the phases map to the codebase today:
 | **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
 | **5** | Parquet + HTTP JSON (GET/POST, retries, pagination), extractor **dispatcher** | **Partial** — OAuth / HMAC / streaming, shared connector interface, DB extractor still **planned** |
 | **6** | Tests (`pytest`), README, `--verbose` / `--quiet` / `--dry-run`, GitHub Actions CI, `.env` + `${VAR}` for HTTP headers/body, **integration test** (real DuckDB file for CSV replace) | **Partial** — more scenarios (HTTP, incremental) optional |
-| **7** | **`python main.py runs list`** (filter by `--status`, `--config-contains`), dashboards TBD | **Partial** — CLI history; Streamlit / external hooks **planned** |
+| **7** | **`python main.py runs list`** (`--status`, `--config-contains`, **`--since` / `--until`** on `finished_at`), dashboards TBD | **Partial** — Streamlit / export formats **planned** |
 
 ---
 
@@ -255,6 +255,6 @@ Near-term priorities:
 
 1. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
 2. **Phase 6** — optional **more integration tests** (HTTP mock + real DB, or incremental second run); further CLI/DX polish as needed.
-3. **Phase 7** — optional **dashboard** or richer **time-range** filters on `runs list`; observability export formats.
+3. **Phase 7** — optional **dashboard** or **JSON/CSV export** of run history; observability hooks.
 
 The CSV → DuckDB baseline and config-driven core are no longer the blocking goal; they are established.
