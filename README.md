@@ -79,7 +79,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Unit tests mock DuckDB so the default `warehouse.duckdb` is untouched. **`tests/test_integration_pipeline.py`** runs a full CSV → temp DuckDB `replace` load (real `duckdb` I/O) in CI as well.
+Unit tests mock DuckDB so the default `warehouse.duckdb` is untouched. **`tests/test_integration_pipeline.py`** runs CSV → temp DuckDB `replace`; **`tests/test_integration_incremental.py`** runs two upsert loads with **incremental watermark** (same CSV path, growing file) in CI as well.
 
 On GitHub, pushes and pull requests to `main` run the same suite via **GitHub Actions** (`.github/workflows/ci.yml`).
 
