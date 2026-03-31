@@ -20,7 +20,7 @@ Snapshot of how the phases map to the codebase today:
 | **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
 | **5** | Parquet + HTTP + **PostgreSQL** read (`dsn` + `query`), extractor **dispatcher** | **Partial** — OAuth / HMAC / streaming, more DBs **planned** |
 | **6** | Tests (`pytest`), CI, `.env` / `${VAR}`, **integration**: CSV replace + **incremental two-run** (checkpoint + upsert) | **Partial** — HTTP + real DB combo optional |
-| **7** | **`python main.py runs list`** (filters + **`--format`**: `table` / `json` / `csv`), dashboards TBD | **Partial** — Streamlit **planned** |
+| **7** | **`runs list`** (filters, **`--format`**, **`--output` / `-o`** file), dashboards TBD | **Partial** — Streamlit **planned** |
 
 ---
 

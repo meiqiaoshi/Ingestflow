@@ -3,6 +3,7 @@ import csv
 import logging
 import sys
 from pathlib import Path
+from typing import TextIO
 
 from dotenv import load_dotenv
 
@@ -198,21 +199,22 @@ def _ensure_run_subcommand(argv: list[str]) -> list[str]:
     return argv
 
 
-def _print_runs_df(df, fmt: str) -> None:
-    """Write run rows to stdout (``table`` | ``json`` | ``csv``)."""
+def _write_runs_df(df, fmt: str, stream: TextIO) -> None:
+    """Write non-empty run rows to ``stream`` (``table`` | ``json`` | ``csv``)."""
     if fmt == "json":
-        print(
+        stream.write(
             df.to_json(
                 orient="records",
                 date_format="iso",
                 default_handler=str,
             )
+            + "\n"
         )
         return
     if fmt == "csv":
-        df.to_csv(sys.stdout, index=False, lineterminator="\n")
+        df.to_csv(stream, index=False, lineterminator="\n")
         return
-    print(df.to_string(index=False))
+    stream.write(df.to_string(index=False) + "\n")
 
 
 def _cmd_runs_list(args: argparse.Namespace) -> None:
@@ -234,16 +236,26 @@ def _cmd_runs_list(args: argparse.Namespace) -> None:
         until=until,
     )
     out_fmt = args.format
-    if df.empty:
-        if out_fmt == "json":
-            print("[]")
-        elif out_fmt == "csv":
-            w = csv.writer(sys.stdout, lineterminator="\n")
-            w.writerow(_RUNS_LIST_CSV_COLUMNS)
-        else:
-            print("(no rows)", file=sys.stderr)
-        return
-    _print_runs_df(df, out_fmt)
+    out_path = args.output
+
+    def _emit(stream: TextIO, *, to_file: bool) -> None:
+        if df.empty:
+            if out_fmt == "json":
+                stream.write("[]\n")
+            elif out_fmt == "csv":
+                w = csv.writer(stream, lineterminator="\n")
+                w.writerow(_RUNS_LIST_CSV_COLUMNS)
+            else:
+                if not to_file:
+                    print("(no rows)", file=sys.stderr)
+            return
+        _write_runs_df(df, out_fmt, stream)
+
+    if out_path:
+        with open(out_path, "w", encoding="utf-8") as f:
+            _emit(f, to_file=True)
+    else:
+        _emit(sys.stdout, to_file=False)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -307,6 +319,12 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=("table", "json", "csv"),
         default="table",
         help="Output format (default: table)",
+    )
+    p_list.add_argument(
+        "--output",
+        "-o",
+        metavar="PATH",
+        help="Write the same output to this file instead of stdout",
     )
     return parser
 
