@@ -121,6 +121,22 @@ source:
 
 Retries apply to transient `urllib` failures (not JSON parse errors).
 
+### HTTP auth via environment variable **names** (recommended)
+
+Avoid putting tokens in YAML by naming env vars instead of values:
+
+- **`bearer_token_env`**: name of an environment variable whose **value** is the raw bearer token (no `Bearer ` prefix). Sets `Authorization: Bearer <value>`.
+- **`basic_auth_user_env`** and **`basic_auth_password_env`**: names of env vars for HTTP Basic user and password. Sets `Authorization: Basic <base64>`.
+
+Do **not** set **`headers.Authorization`** in the same config when using these fields. Do **not** combine `bearer_token_env` with `basic_auth_*`.
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/items
+  bearer_token_env: API_TOKEN
+```
+
 ### Environment variables and `.env`
 
 On startup, **`main.py` loads a `.env` file** from the current working directory (if present) via `python-dotenv`. Variables set in the shell environment take precedence over `.env`.
@@ -175,6 +191,8 @@ source:
   - `offset_query`: `enabled`, `strategy`, `page_size`, `max_requests`, optional `limit_param`, `offset_param`, `start_offset`
   - `page_query`: `enabled`, `strategy`, `page_size`, `max_pages`, optional `page_param`, `page_size_param`, `start_page`
 - retry: optional; `count` (≥1), `backoff_seconds`
+- bearer_token_env: optional; env var **name** for bearer token (`http` only)
+- basic_auth_user_env / basic_auth_password_env: optional; env var **names** for Basic auth (`http` only; set both)
 - dsn: PostgreSQL connection string (for `postgres`; ``${VAR}`` allowed)
 - query: SQL string for `postgres` (``${VAR}`` allowed)
 

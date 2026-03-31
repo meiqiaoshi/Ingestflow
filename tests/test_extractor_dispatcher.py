@@ -49,6 +49,23 @@ def test_extract_source_http_resolves_env_in_headers(
     assert kwargs["headers"] == {"Authorization": "Bearer token-123"}
 
 
+def test_extract_source_http_bearer_token_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("API_TOKEN", "tok")
+    expected = pd.DataFrame({"id": [1]})
+    mock = MagicMock(return_value=expected)
+    monkeypatch.setattr(dispatcher, "extract_http", mock)
+    dispatcher.extract_source(
+        {
+            "type": "http",
+            "url": "https://example.com/api",
+            "bearer_token_env": "API_TOKEN",
+        }
+    )
+    assert mock.call_args.kwargs["headers"]["Authorization"] == "Bearer tok"
+
+
 def test_extract_source_unknown_type() -> None:
     with pytest.raises(NotImplementedError, match="Unsupported source.type"):
         dispatcher.extract_source({"type": "db"})

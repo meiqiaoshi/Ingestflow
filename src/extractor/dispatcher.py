@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 
 from core.env_resolve import resolve_env_in_obj, resolve_env_placeholders
+from core.http_auth import merge_http_env_headers
 from extractor.csv_extractor import extract_csv
 from extractor.http_extractor import extract_http
 from extractor.parquet_extractor import extract_parquet
@@ -31,6 +32,7 @@ def extract_source(source: Dict[str, Any]) -> pd.DataFrame:
         headers: Optional[Dict[str, Any]] = source.get("headers")
         if headers is not None:
             headers = resolve_env_in_obj(dict(headers))
+        headers = merge_http_env_headers(source, headers)
         body: Optional[Dict[str, Any]] = source.get("body")
         if body is not None:
             body = resolve_env_in_obj(dict(body))

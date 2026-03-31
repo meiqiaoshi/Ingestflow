@@ -2,6 +2,8 @@ import re
 
 import yaml
 
+from core.http_auth import validate_http_auth_config
+
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -89,6 +91,8 @@ def validate_runtime_config(config: dict) -> None:
                 raise ValueError("source.retry must be a mapping when provided")
             if "count" in rtry and int(rtry["count"]) < 1:
                 raise ValueError("source.retry.count must be >= 1")
+
+        validate_http_auth_config(source)
 
     elif src_type == "postgres":
         dsn = source.get("dsn")

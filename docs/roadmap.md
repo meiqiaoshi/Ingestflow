@@ -18,7 +18,7 @@ Snapshot of how the phases map to the codebase today:
 | **2** | Run metadata (`ingestion_runs`), logging, execution summary | **Delivered** |
 | **3** | Validation (`required_columns`, `null_checks`, `type_checks`) | **Delivered** |
 | **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
-| **5** | Parquet + HTTP + **PostgreSQL** read (`dsn` + `query`), extractor **dispatcher** | **Partial** — OAuth / HMAC / streaming, more DBs **planned** |
+| **5** | Parquet + HTTP (**bearer/basic env auth**, JSON, pagination) + **PostgreSQL** read, **dispatcher** | **Partial** — OAuth2 flows / HMAC / streaming, more DBs **planned** |
 | **6** | Tests (`pytest`), CI, `.env` / `${VAR}`, **integration**: CSV replace + **incremental two-run** (checkpoint + upsert) | **Partial** — HTTP + real DB combo optional |
 | **7** | **`runs list`** (filters, **`--format`**, **`--output` / `-o`** file), dashboards TBD | **Partial** — Streamlit **planned** |
 

@@ -131,6 +131,31 @@ def test_postgres_source_ok() -> None:
     )
 
 
+def test_http_bearer_token_env_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "http",
+                "url": "https://example.com/api",
+                "bearer_token_env": "API_TOKEN",
+            }
+        )
+    )
+
+
+def test_http_bearer_conflicts_with_headers_auth() -> None:
+    cfg = _minimal(
+        source={
+            "type": "http",
+            "url": "https://example.com/api",
+            "headers": {"Authorization": "Bearer x"},
+            "bearer_token_env": "API_TOKEN",
+        }
+    )
+    with pytest.raises(ValueError, match="Authorization cannot be combined"):
+        validate_runtime_config(cfg)
+
+
 def test_postgres_requires_query() -> None:
     cfg = _minimal(
         source={
