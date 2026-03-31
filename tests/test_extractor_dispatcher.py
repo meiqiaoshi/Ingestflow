@@ -101,3 +101,20 @@ def test_extract_source_dispatches_postgres(monkeypatch: pytest.MonkeyPatch) -> 
     )
     mock.assert_called_once()
     pd.testing.assert_frame_equal(out, expected)
+
+
+def test_extract_source_postgres_table_builds_select_star(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = pd.DataFrame()
+    mock = MagicMock(return_value=expected)
+    monkeypatch.setattr(dispatcher, "extract_postgres", mock)
+    dispatcher.extract_source(
+        {
+            "type": "postgres",
+            "dsn": "postgresql://localhost/db",
+            "table": "orders",
+            "schema": "public",
+        }
+    )
+    assert mock.call_args[0][1] == 'SELECT * FROM "public"."orders"'

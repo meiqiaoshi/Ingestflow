@@ -108,6 +108,24 @@ source:
 
 For `page_query`, requests are made page by page until an empty/short page or `max_pages`.
 
+### Example (HTTP OAuth2 client_credentials)
+
+Fetches an access token before calling **`url`** (stdlib POST to **`oauth2_token_url`**).  
+Requires **`oauth2_client_id_env`** and **`oauth2_client_secret_env`** (names of env vars, not secrets in YAML).  
+Optional: **`oauth2_scope`**, **`oauth2_timeout_seconds`**.
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/v1/items
+  oauth2_token_url: https://auth.example.com/oauth/token
+  oauth2_client_id_env: OAUTH_CLIENT_ID
+  oauth2_client_secret_env: OAUTH_CLIENT_SECRET
+  oauth2_scope: read:data
+```
+
+Cannot be combined with **`bearer_token_env`**, **`basic_auth_*`**, or **`headers.Authorization`**.
+
 ### Example (HTTP retries)
 
 ```yaml
@@ -175,6 +193,19 @@ source:
 
 - **`dsn`**: libpq connection string (placeholders ``${VAR}`` are expanded like HTTP headers).
 - **`query`**: trusted SQL (operator-controlled); may also use ``${VAR}`` in the string.
+- **`table`** + optional **`schema`** (default `public`): alternative to **`query`** — runs ``SELECT * FROM "schema"."table"`` (identifiers must match the usual rules).
+
+### Example (PostgreSQL table shortcut)
+
+```yaml
+source:
+  type: postgres
+  dsn: ${POSTGRES_DSN}
+  schema: public
+  table: orders
+```
+
+Do not set **`query`** and **`table`** in the same config.
 
 ### Fields
 
@@ -193,8 +224,11 @@ source:
 - retry: optional; `count` (≥1), `backoff_seconds`
 - bearer_token_env: optional; env var **name** for bearer token (`http` only)
 - basic_auth_user_env / basic_auth_password_env: optional; env var **names** for Basic auth (`http` only; set both)
+- oauth2_token_url / oauth2_client_id_env / oauth2_client_secret_env: optional OAuth2 client_credentials (`http` only; set all three)
+- oauth2_scope / oauth2_timeout_seconds: optional (`http`)
 - dsn: PostgreSQL connection string (for `postgres`; ``${VAR}`` allowed)
-- query: SQL string for `postgres` (``${VAR}`` allowed)
+- query: SQL string for `postgres` (``${VAR}`` allowed), unless using **table**/**schema**
+- table / schema: optional shortcut for `postgres` (omit **query**)
 
 ---
 

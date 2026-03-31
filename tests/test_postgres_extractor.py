@@ -6,7 +6,13 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from extractor.postgres_extractor import extract_postgres
+from extractor.postgres_extractor import extract_postgres, postgres_select_star_sql
+
+
+def test_postgres_select_star_sql() -> None:
+    assert postgres_select_star_sql("public", "orders") == (
+        'SELECT * FROM "public"."orders"'
+    )
 
 
 def test_extract_postgres_calls_read_sql() -> None:

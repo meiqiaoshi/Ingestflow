@@ -97,8 +97,8 @@ By default DuckDB writes to **`warehouse.duckdb`** in the project root (override
 - 🔌 **Multi-Source Ingestion**
   - CSV files
   - Parquet files (`pyarrow`)
-  - HTTP JSON (`source.type: http`, GET/POST, pagination, retries; bearer/basic via env var **names**)
-  - PostgreSQL read (`source.type: postgres`, `dsn` + `query`, `psycopg2-binary`)
+  - HTTP JSON (`source.type: http`, GET/POST, pagination, retries; bearer/basic/**OAuth2 client_credentials** via env var **names**)
+  - PostgreSQL read (`source.type: postgres`, `dsn` + `query` or **`table`/`schema`**, `psycopg2-binary`)
   - REST APIs (OAuth / HMAC — planned)
   - Other databases (planned)
 

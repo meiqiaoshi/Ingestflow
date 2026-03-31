@@ -131,6 +131,19 @@ def test_postgres_source_ok() -> None:
     )
 
 
+def test_postgres_table_mode_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "postgres",
+                "dsn": "postgresql://localhost:5432/db",
+                "table": "orders",
+                "schema": "public",
+            }
+        )
+    )
+
+
 def test_http_bearer_token_env_ok() -> None:
     validate_runtime_config(
         _minimal(
@@ -156,7 +169,7 @@ def test_http_bearer_conflicts_with_headers_auth() -> None:
         validate_runtime_config(cfg)
 
 
-def test_postgres_requires_query() -> None:
+def test_postgres_requires_query_or_table() -> None:
     cfg = _minimal(
         source={
             "type": "postgres",
@@ -164,5 +177,32 @@ def test_postgres_requires_query() -> None:
             "query": "",
         }
     )
-    with pytest.raises(ValueError, match="source.query"):
+    with pytest.raises(ValueError, match="either source.query or source.table"):
         validate_runtime_config(cfg)
+
+
+def test_postgres_query_and_table_rejected() -> None:
+    cfg = _minimal(
+        source={
+            "type": "postgres",
+            "dsn": "postgresql://localhost:5432/db",
+            "query": "SELECT 1",
+            "table": "t",
+        }
+    )
+    with pytest.raises(ValueError, match="cannot both be set"):
+        validate_runtime_config(cfg)
+
+
+def test_http_oauth2_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "http",
+                "url": "https://example.com/api",
+                "oauth2_token_url": "https://oauth.example.com/token",
+                "oauth2_client_id_env": "CID",
+                "oauth2_client_secret_env": "CSEC",
+            }
+        )
+    )

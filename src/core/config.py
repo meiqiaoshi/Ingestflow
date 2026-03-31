@@ -98,9 +98,24 @@ def validate_runtime_config(config: dict) -> None:
         dsn = source.get("dsn")
         if not isinstance(dsn, str) or not str(dsn).strip():
             raise ValueError("source.dsn must be a non-empty string for postgres sources")
-        q = source.get("query")
-        if not isinstance(q, str) or not str(q).strip():
-            raise ValueError("source.query must be a non-empty SQL string for postgres sources")
+        q_raw = source.get("query")
+        tbl = source.get("table")
+        has_query = isinstance(q_raw, str) and bool(q_raw.strip())
+        has_table = isinstance(tbl, str) and bool(tbl.strip())
+        if has_query and has_table:
+            raise ValueError("source.query and source.table cannot both be set for postgres")
+        if not has_query and not has_table:
+            raise ValueError(
+                "postgres source requires either source.query or source.table (with optional source.schema)"
+            )
+        if has_query:
+            pass
+        else:
+            _validate_identifier(tbl.strip(), "source.table")
+            sc = source.get("schema", "public")
+            if not isinstance(sc, str) or not sc.strip():
+                raise ValueError("source.schema must be a non-empty string (omit for default public)")
+            _validate_identifier(sc.strip(), "source.schema")
 
     if target.get("type") != "duckdb":
         raise ValueError("Only target.type='duckdb' is supported")

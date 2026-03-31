@@ -65,3 +65,40 @@ def test_validate_bearer_and_basic_rejected() -> None:
 def test_validate_basic_incomplete() -> None:
     with pytest.raises(ValueError, match="together"):
         validate_http_auth_config({"basic_auth_user_env": "U"})
+
+
+def test_validate_oauth2_partial_rejected() -> None:
+    with pytest.raises(ValueError, match="together"):
+        validate_http_auth_config({"oauth2_token_url": "https://x/token"})
+
+
+def test_validate_oauth2_and_bearer_rejected() -> None:
+    with pytest.raises(ValueError, match="OAuth2 cannot be combined"):
+        validate_http_auth_config(
+            {
+                "oauth2_token_url": "https://x/token",
+                "oauth2_client_id_env": "A",
+                "oauth2_client_secret_env": "B",
+                "bearer_token_env": "T",
+            }
+        )
+
+
+def test_merge_oauth2_sets_bearer(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CID", "id")
+    monkeypatch.setenv("CSEC", "sec")
+    monkeypatch.setattr(
+        "core.http_auth.fetch_client_credentials_token",
+        lambda *a, **k: "from-oauth",
+    )
+    h = merge_http_env_headers(
+        {
+            "oauth2_token_url": "https://x/token",
+            "oauth2_client_id_env": "CID",
+            "oauth2_client_secret_env": "CSEC",
+        },
+        {"Accept": "application/json"},
+    )
+    assert h is not None
+    assert h["Authorization"] == "Bearer from-oauth"
+    assert h["Accept"] == "application/json"
