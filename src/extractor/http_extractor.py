@@ -85,12 +85,10 @@ def _with_retry(
     count: int,
     backoff_seconds: float,
 ) -> Any:
-    last: Optional[Exception] = None
     for attempt in range(max(1, count)):
         try:
             return fn()
-        except (urllib.error.URLError, urllib.error.HTTPError) as e:
-            last = e
+        except (urllib.error.URLError, urllib.error.HTTPError):
             if attempt < count - 1:
                 time.sleep(max(0.0, backoff_seconds))
             else:

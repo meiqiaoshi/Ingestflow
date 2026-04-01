@@ -37,6 +37,13 @@ def extract_source(source: Dict[str, Any]) -> pd.DataFrame:
         body: Optional[Dict[str, Any]] = source.get("body")
         if body is not None:
             body = resolve_env_in_obj(dict(body))
+        headers = apply_hmac_sha256_headers(
+            source,
+            headers,
+            body,
+            source["url"],
+            str(source.get("method", "GET")),
+        )
         return extract_http(
             source["url"],
             method=source.get("method", "GET"),

@@ -79,8 +79,11 @@ Optional **`.env`** in the project directory sets environment variables before c
 
 ```bash
 pip install -r requirements-dev.txt
+ruff check main.py src tests scripts
 pytest
 ```
+
+CI runs **`ruff check`** (Pyflakes-style `F` rules) and **pytest** on **Python 3.11 and 3.12**.
 
 Unit tests mock DuckDB so the default `warehouse.duckdb` is untouched. **`tests/test_integration_pipeline.py`** runs CSV → temp DuckDB `replace`; **`tests/test_integration_incremental.py`** runs two upsert loads with **incremental watermark** (same CSV path, growing file) in CI as well.
 
