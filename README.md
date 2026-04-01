@@ -71,7 +71,7 @@ python main.py run --config configs/sample.yaml --dry-run
 
 Logs go to **stderr** at `INFO` by default.
 
-After each **`run`** completes, **one extra line of JSON** is also written to stderr (`event: ingestflow_run`, with `run_id`, `config_path`, `status`, `duration_seconds`, `rows_loaded`, etc.) for log pipelines; it is separate from the human-readable log format above.
+After each **`run`** completes, **one extra line of JSON** is also written to stderr (`event: ingestflow_run`, with `run_id`, `config_path`, `status`, `duration_seconds`, `rows_loaded`, etc.) for log pipelines; it is separate from the human-readable log format above. Use **`--no-json-summary`** on `run` to disable that line.
 
 Optional **`.env`** in the project directory sets environment variables before config load (`python-dotenv`). For HTTP sources, use **`${VAR_NAME}`** in `source.headers` or `source.body` string values to inject secrets without putting them in YAML (see `docs/config_spec.md`).
 

@@ -54,7 +54,12 @@ def _source_label(source: dict) -> str:
     return str(source.get("path") or source.get("url") or "")
 
 
-def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
+def run_pipeline(
+    config_path: str,
+    *,
+    dry_run: bool = False,
+    json_summary: bool = True,
+) -> None:
     resolved_config_path = str(Path(config_path).resolve())
     logger.info("Loading config: %s", config_path)
     if dry_run:
@@ -185,22 +190,23 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
         logger.info("Previous checkpoint: %s", last_checkpoint)
         logger.info("New checkpoint: %s", new_checkpoint)
 
-    emit_run_summary_json(
-        run_id=run_id,
-        config_path=resolved_config_path,
-        status=status,
-        started_at=started_at,
-        finished_at=finished_at,
-        duration_seconds=duration_s,
-        rows_loaded=rows_loaded,
-        target_table=target["table"],
-        load_mode=load_mode,
-        incremental_enabled=incremental_enabled,
-        dry_run=dry_run,
-        source_type=src_type,
-        db_path=db_path,
-        error_message=error_message,
-    )
+    if json_summary:
+        emit_run_summary_json(
+            run_id=run_id,
+            config_path=resolved_config_path,
+            status=status,
+            started_at=started_at,
+            finished_at=finished_at,
+            duration_seconds=duration_s,
+            rows_loaded=rows_loaded,
+            target_table=target["table"],
+            load_mode=load_mode,
+            incremental_enabled=incremental_enabled,
+            dry_run=dry_run,
+            source_type=src_type,
+            db_path=db_path,
+            error_message=error_message,
+        )
 
     if status == "failed" and exc_info is not None:
         logger.error("Pipeline failed: %s", error_message[:500] if error_message else "")
@@ -298,6 +304,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Validate and transform only; do not load, update checkpoints, or write run metadata",
     )
+    p_run.add_argument(
+        "--no-json-summary",
+        action="store_true",
+        help="Do not print the structured JSON summary line to stderr on completion",
+    )
 
     p_runs = sub.add_parser("runs", help="Inspect ingestion run history")
     runs_sub = p_runs.add_subparsers(dest="runs_cmd", required=True)
@@ -356,7 +367,11 @@ def main() -> None:
 
     if args.command == "run":
         configure_logging(verbose=args.verbose, quiet=args.quiet)
-        run_pipeline(args.config, dry_run=args.dry_run)
+        run_pipeline(
+            args.config,
+            dry_run=args.dry_run,
+            json_summary=not args.no_json_summary,
+        )
     elif args.command == "runs":
         if args.runs_cmd == "list":
             _cmd_runs_list(args)

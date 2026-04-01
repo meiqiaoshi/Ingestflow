@@ -53,3 +53,18 @@ def test_normal_run_calls_load_and_record_run(
     assert kwargs["db_path"] == "warehouse.duckdb"
     assert kwargs["config_path"] == str(Path(sample_config_path).resolve())
     mock_upsert.assert_called()
+
+
+def test_run_pipeline_skips_json_summary_when_disabled(
+    monkeypatch: pytest.MonkeyPatch, sample_config_path: str
+) -> None:
+    mock_emit = MagicMock()
+    monkeypatch.setattr(main, "emit_run_summary_json", mock_emit)
+    monkeypatch.setattr(main, "load_to_duckdb", MagicMock(return_value=3))
+    monkeypatch.setattr(main, "record_run", MagicMock())
+    monkeypatch.setattr(main, "upsert_checkpoint", MagicMock())
+    monkeypatch.setattr(main, "get_last_checkpoint", lambda **kwargs: None)
+
+    main.run_pipeline(sample_config_path, dry_run=False, json_summary=False)
+
+    mock_emit.assert_not_called()
