@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from core.config import load_config
 from core.logging_config import configure_logging
+from core.run_summary_json import emit_run_summary_json
 from extractor.dispatcher import extract_source, source_fingerprint
 from transformer.basic_transformer import apply_transformations
 from loader.duckdb_loader import load_to_duckdb
@@ -162,7 +163,8 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
                 pass
 
     # summary
-    duration_s = (utc_now() - started_at).total_seconds()
+    finished_at = utc_now()
+    duration_s = (finished_at - started_at).total_seconds()
     logger.info("=== Ingestion Completed ===")
     if dry_run:
         logger.info("Dry run: true (no database writes)")
@@ -182,6 +184,23 @@ def run_pipeline(config_path: str, *, dry_run: bool = False) -> None:
         logger.info("Watermark column: %s", watermark_column)
         logger.info("Previous checkpoint: %s", last_checkpoint)
         logger.info("New checkpoint: %s", new_checkpoint)
+
+    emit_run_summary_json(
+        run_id=run_id,
+        config_path=resolved_config_path,
+        status=status,
+        started_at=started_at,
+        finished_at=finished_at,
+        duration_seconds=duration_s,
+        rows_loaded=rows_loaded,
+        target_table=target["table"],
+        load_mode=load_mode,
+        incremental_enabled=incremental_enabled,
+        dry_run=dry_run,
+        source_type=src_type,
+        db_path=db_path,
+        error_message=error_message,
+    )
 
     if status == "failed" and exc_info is not None:
         logger.error("Pipeline failed: %s", error_message[:500] if error_message else "")
