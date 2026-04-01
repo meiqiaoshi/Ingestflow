@@ -3,6 +3,7 @@ import re
 import yaml
 
 from core.http_auth import validate_http_auth_config
+from core.http_hmac import validate_hmac_config
 
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -93,6 +94,7 @@ def validate_runtime_config(config: dict) -> None:
                 raise ValueError("source.retry.count must be >= 1")
 
         validate_http_auth_config(source)
+        validate_hmac_config(source)
 
     elif src_type == "postgres":
         dsn = source.get("dsn")
@@ -116,6 +118,17 @@ def validate_runtime_config(config: dict) -> None:
             if not isinstance(sc, str) or not sc.strip():
                 raise ValueError("source.schema must be a non-empty string (omit for default public)")
             _validate_identifier(sc.strip(), "source.schema")
+
+        sto = source.get("statement_timeout_ms")
+        if sto is not None:
+            if not isinstance(sto, int) or sto < 1:
+                raise ValueError(
+                    "source.statement_timeout_ms must be a positive integer (milliseconds) when provided"
+                )
+        mx = source.get("max_rows")
+        if mx is not None:
+            if not isinstance(mx, int) or mx < 1:
+                raise ValueError("source.max_rows must be a positive integer when provided")
 
     if target.get("type") != "duckdb":
         raise ValueError("Only target.type='duckdb' is supported")

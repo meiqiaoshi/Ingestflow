@@ -103,6 +103,25 @@ def test_extract_source_dispatches_postgres(monkeypatch: pytest.MonkeyPatch) -> 
     pd.testing.assert_frame_equal(out, expected)
 
 
+def test_extract_source_postgres_table_with_max_rows_in_sql(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected = pd.DataFrame()
+    mock = MagicMock(return_value=expected)
+    monkeypatch.setattr(dispatcher, "extract_postgres", mock)
+    dispatcher.extract_source(
+        {
+            "type": "postgres",
+            "dsn": "postgresql://localhost/db",
+            "table": "orders",
+            "schema": "public",
+            "max_rows": 50,
+        }
+    )
+    assert "LIMIT 50" in mock.call_args[0][1]
+    assert mock.call_args.kwargs.get("max_rows") is None
+
+
 def test_extract_source_postgres_table_builds_select_star(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

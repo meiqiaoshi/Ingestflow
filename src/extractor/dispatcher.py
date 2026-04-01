@@ -9,6 +9,7 @@ import pandas as pd
 
 from core.env_resolve import resolve_env_in_obj, resolve_env_placeholders
 from core.http_auth import merge_http_env_headers
+from core.http_hmac import apply_hmac_sha256_headers
 from extractor.csv_extractor import extract_csv
 from extractor.http_extractor import extract_http
 from extractor.parquet_extractor import extract_parquet
@@ -50,13 +51,27 @@ def extract_source(source: Dict[str, Any]) -> pd.DataFrame:
     if src_type == "postgres":
         dsn = resolve_env_placeholders(str(source["dsn"]).strip())
         q_raw = source.get("query")
+        sto = source.get("statement_timeout_ms")
+        sto_i = int(sto) if isinstance(sto, int) else None
+        mr = source.get("max_rows")
+        mr_i = int(mr) if isinstance(mr, int) else None
         if isinstance(q_raw, str) and q_raw.strip():
             query = resolve_env_placeholders(q_raw.strip())
-        else:
-            schema = str(source.get("schema", "public")).strip() or "public"
-            table = str(source["table"]).strip()
-            query = postgres_select_star_sql(schema, table)
-        return extract_postgres(dsn, query)
+            return extract_postgres(
+                dsn,
+                query,
+                statement_timeout_ms=sto_i,
+                max_rows=mr_i,
+            )
+        schema = str(source.get("schema", "public")).strip() or "public"
+        table = str(source["table"]).strip()
+        query = postgres_select_star_sql(schema, table, max_rows=mr_i)
+        return extract_postgres(
+            dsn,
+            query,
+            statement_timeout_ms=sto_i,
+            max_rows=None,
+        )
 
     raise NotImplementedError(f"Unsupported source.type: {src_type}")
 

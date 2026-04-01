@@ -194,6 +194,46 @@ def test_postgres_query_and_table_rejected() -> None:
         validate_runtime_config(cfg)
 
 
+def test_postgres_max_rows_and_timeout_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "postgres",
+                "dsn": "postgresql://localhost/db",
+                "table": "t",
+                "schema": "public",
+                "max_rows": 1000,
+                "statement_timeout_ms": 30000,
+            }
+        )
+    )
+
+
+def test_postgres_max_rows_invalid() -> None:
+    cfg = _minimal(
+        source={
+            "type": "postgres",
+            "dsn": "postgresql://localhost/db",
+            "query": "SELECT 1",
+            "max_rows": 0,
+        }
+    )
+    with pytest.raises(ValueError, match="max_rows"):
+        validate_runtime_config(cfg)
+
+
+def test_http_hmac_secret_ok() -> None:
+    validate_runtime_config(
+        _minimal(
+            source={
+                "type": "http",
+                "url": "https://example.com/api",
+                "hmac_sha256_secret_env": "API_HMAC_SECRET",
+            }
+        )
+    )
+
+
 def test_http_oauth2_ok() -> None:
     validate_runtime_config(
         _minimal(

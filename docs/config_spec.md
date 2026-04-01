@@ -126,6 +126,19 @@ source:
 
 Cannot be combined with **`bearer_token_env`**, **`basic_auth_*`**, or **`headers.Authorization`**.
 
+### Example (HTTP HMAC-SHA256)
+
+Adds a hex digest header (default **`X-Signature`**) using a secret from an environment variable (**`hmac_sha256_secret_env`** name only).  
+**GET** signs the full URL string; **POST** signs a canonical JSON body (sorted keys, compact).
+
+```yaml
+source:
+  type: http
+  url: https://api.example.com/v1/items
+  hmac_sha256_secret_env: API_HMAC_SECRET
+  hmac_sha256_header: X-Signature
+```
+
 ### Example (HTTP retries)
 
 ```yaml
@@ -207,6 +220,9 @@ source:
 
 Do not set **`query`** and **`table`** in the same config.
 
+Optional **`statement_timeout_ms`** (positive integer, milliseconds) sets PostgreSQL **`statement_timeout`** on the session before the query runs.  
+Optional **`max_rows`** caps rows: for **`query`**, the SQL is wrapped in a subquery with **`LIMIT`**; for **`table`**, **`LIMIT`** is appended to the generated `SELECT *`.
+
 ### Fields
 
 - type: source type (`csv`, `parquet`, `http`, `postgres`)
@@ -229,6 +245,7 @@ Do not set **`query`** and **`table`** in the same config.
 - dsn: PostgreSQL connection string (for `postgres`; ``${VAR}`` allowed)
 - query: SQL string for `postgres` (``${VAR}`` allowed), unless using **table**/**schema**
 - table / schema: optional shortcut for `postgres` (omit **query**)
+- statement_timeout_ms / max_rows: optional PostgreSQL limits (`postgres`)
 
 ---
 
