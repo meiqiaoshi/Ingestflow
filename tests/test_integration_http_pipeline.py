@@ -163,6 +163,61 @@ def test_run_pipeline_http_pagination_offset_merges_pages_to_duckdb(
         con.close()
 
 
+def test_run_pipeline_http_pagination_page_query_merges_pages_to_duckdb(
+    tmp_path: Path,
+) -> None:
+    """page_query pagination: two requests, short final page → merged rows in DuckDB."""
+    pages = [
+        json.dumps([{"n": 10}, {"n": 11}]),
+        json.dumps([{"n": 12}]),
+    ]
+
+    db_file = tmp_path / "wh_page_query.duckdb"
+    config_path = tmp_path / "http_page_query.yaml"
+    config = {
+        "source": {
+            "type": "http",
+            "url": "https://example.com/items",
+            "pagination": {
+                "enabled": True,
+                "strategy": "page_query",
+                "page_size": 2,
+                "max_pages": 10,
+                "page_param": "page",
+                "page_size_param": "per_page",
+                "start_page": 1,
+            },
+        },
+        "target": {
+            "type": "duckdb",
+            "table": "http_e2e_page_query",
+            "db_path": str(db_file),
+        },
+        "load": {"mode": "replace"},
+    }
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    with patch(
+        "extractor.http_extractor.urllib.request.urlopen",
+        side_effect=[_FakeResp(p) for p in pages],
+    ) as mocked:
+        main.run_pipeline(str(config_path), dry_run=False)
+
+    assert mocked.call_count == 2
+
+    con = duckdb.connect(str(db_file))
+    try:
+        n = con.execute("SELECT COUNT(*) FROM http_e2e_page_query").fetchone()[0]
+        assert int(n) == 3
+        ns = con.execute("SELECT n FROM http_e2e_page_query ORDER BY n").fetchall()
+        assert [r[0] for r in ns] == [10, 11, 12]
+        runs = con.execute("SELECT rows_loaded FROM ingestion_runs").fetchall()
+        assert len(runs) == 1
+        assert runs[0][0] == 3
+    finally:
+        con.close()
+
+
 def test_run_pipeline_http_post_json_body_to_duckdb(tmp_path: Path) -> None:
     """POST with JSON body through config → dispatcher → extract → DuckDB."""
     from urllib.request import Request
