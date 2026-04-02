@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from unittest.mock import patch
 
 import duckdb
@@ -103,5 +104,61 @@ def test_run_pipeline_http_records_key_nested_to_duckdb(tmp_path: Path) -> None:
         ).fetchone()
         assert row[0] == "x"
         assert int(row[1]) == 3
+    finally:
+        con.close()
+
+
+def test_run_pipeline_http_pagination_offset_merges_pages_to_duckdb(
+    tmp_path: Path,
+) -> None:
+    """offset_query pagination: multiple urlopen calls → merged rows in DuckDB."""
+    pages = [
+        json.dumps([{"n": 1}]),
+        json.dumps([{"n": 2}]),
+        json.dumps([]),
+    ]
+
+    db_file = tmp_path / "wh_page.duckdb"
+    config_path = tmp_path / "http_paginated.yaml"
+    config = {
+        "source": {
+            "type": "http",
+            "url": "https://example.com/items",
+            "pagination": {
+                "enabled": True,
+                "strategy": "offset_query",
+                "page_size": 1,
+                "max_requests": 10,
+                "limit_param": "_limit",
+                "offset_param": "_start",
+                "start_offset": 0,
+            },
+        },
+        "target": {
+            "type": "duckdb",
+            "table": "http_e2e_paged",
+            "db_path": str(db_file),
+        },
+        "load": {"mode": "replace"},
+    }
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    with patch(
+        "extractor.http_extractor.urllib.request.urlopen",
+        side_effect=[_FakeResp(p) for p in pages],
+    ) as mocked:
+        main.run_pipeline(str(config_path), dry_run=False)
+
+    assert mocked.call_count == 3
+
+    con = duckdb.connect(str(db_file))
+    try:
+        n = con.execute("SELECT COUNT(*) FROM http_e2e_paged").fetchone()[0]
+        assert int(n) == 2
+        ns = con.execute("SELECT n FROM http_e2e_paged ORDER BY n").fetchall()
+        assert [r[0] for r in ns] == [1, 2]
+        runs = con.execute("SELECT rows_loaded FROM ingestion_runs").fetchall()
+        assert len(runs) == 1
+        assert runs[0][0] == 2
     finally:
         con.close()
