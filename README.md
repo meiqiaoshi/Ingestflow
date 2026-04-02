@@ -83,6 +83,8 @@ ruff check main.py src tests scripts
 pytest
 ```
 
+On macOS/Linux you can use **`make check`** (or **`make lint`**, **`make test`**) from the repo root; see **`Makefile`**. **`make sample-parquet`** then **`make run-sample`** matches the Quick start Parquet flow; **`make run-sample`** alone runs the CSV sample config.
+
 CI runs **`ruff check`** (Pyflakes-style `F` rules) and **pytest** on **Python 3.11 and 3.12**.
 
 Unit tests mock DuckDB so the default `warehouse.duckdb` is untouched. **`tests/test_integration_pipeline.py`** runs CSV → temp DuckDB `replace`; **`tests/test_integration_incremental.py`** runs two upsert loads with **incremental watermark** (same CSV path, growing file) in CI as well.
