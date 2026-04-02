@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import duckdb
-import pytest
 import yaml
 
 import main
@@ -160,5 +159,56 @@ def test_run_pipeline_http_pagination_offset_merges_pages_to_duckdb(
         runs = con.execute("SELECT rows_loaded FROM ingestion_runs").fetchall()
         assert len(runs) == 1
         assert runs[0][0] == 2
+    finally:
+        con.close()
+
+
+def test_run_pipeline_http_post_json_body_to_duckdb(tmp_path: Path) -> None:
+    """POST with JSON body through config → dispatcher → extract → DuckDB."""
+    from urllib.request import Request
+
+    response_rows = [{"row_id": 7, "label": "ok"}]
+    raw = json.dumps(response_rows)
+
+    def _urlopen(req: object, timeout=None) -> _FakeResp:
+        assert isinstance(req, Request)
+        assert req.get_method() == "POST"
+        assert req.data is not None
+        assert b"needle" in req.data
+        return _FakeResp(raw)
+
+    db_file = tmp_path / "wh_post.duckdb"
+    config_path = tmp_path / "http_post.yaml"
+    config = {
+        "source": {
+            "type": "http",
+            "url": "https://example.com/api/search",
+            "method": "POST",
+            "body": {"q": "needle", "limit": 10},
+        },
+        "target": {
+            "type": "duckdb",
+            "table": "http_e2e_post",
+            "db_path": str(db_file),
+        },
+        "load": {"mode": "replace"},
+    }
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    with patch(
+        "extractor.http_extractor.urllib.request.urlopen",
+        side_effect=_urlopen,
+    ) as mocked:
+        main.run_pipeline(str(config_path), dry_run=False)
+
+    assert mocked.call_count == 1
+
+    con = duckdb.connect(str(db_file))
+    try:
+        row = con.execute(
+            "SELECT row_id, label FROM http_e2e_post LIMIT 1"
+        ).fetchone()
+        assert int(row[0]) == 7
+        assert row[1] == "ok"
     finally:
         con.close()
