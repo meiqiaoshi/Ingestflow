@@ -89,7 +89,7 @@ On macOS/Linux you can use **`make check`** (or **`make lint`**, **`make test`**
 
 Optional: install **`pre-commit`** (`requirements-dev.txt`), run **`pre-commit install`**, then hooks match CI lint; **`make precommit`** runs all hooks once. To exercise the **Postgres** integration test locally, set **`INGESTFLOW_TEST_PG_DSN`** to a reachable DSN (CI sets this automatically with a service container).
 
-CI runs **`ruff check`** (Pyflakes-style `F` rules) and **pytest** (including a small **Postgres** check) on **Python 3.11, 3.12, and 3.13**.
+CI runs **`ruff check`** (Pyflakes-style `F` rules) and **pytest** (Postgres **extract** plus **`run_pipeline`** from a `query` source into DuckDB) on **Python 3.11, 3.12, and 3.13**.
 
 Unit tests mock DuckDB so the default `warehouse.duckdb` is untouched. **`tests/test_integration_pipeline.py`** runs CSV → temp DuckDB `replace`; **`tests/test_integration_incremental.py`** runs two upsert loads with **incremental watermark** (same CSV path, growing file) in CI as well.
 
