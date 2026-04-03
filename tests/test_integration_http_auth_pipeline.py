@@ -1,4 +1,4 @@
-"""HTTP auth (bearer env, HMAC) through ``run_pipeline`` with mocked ``urlopen``."""
+"""HTTP auth (bearer env, OAuth2 client_credentials, HMAC) via ``run_pipeline`` + mocks."""
 
 from __future__ import annotations
 
@@ -79,6 +79,66 @@ def test_run_pipeline_http_bearer_env_to_duckdb(
     try:
         n = con.execute("SELECT COUNT(*) FROM http_e2e_bearer").fetchone()[0]
         assert int(n) == 1
+    finally:
+        con.close()
+
+
+def test_run_pipeline_http_oauth2_client_credentials_to_duckdb(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """OAuth2 env client id/secret → mocked token fetch → Bearer on data request → DuckDB."""
+    monkeypatch.setenv("INGESTFLOW_TEST_OAUTH_CID", "cid_e2e")
+    monkeypatch.setenv("INGESTFLOW_TEST_OAUTH_CSEC", "csec_e2e")
+
+    token_url = "https://id.example.com/oauth/token"
+    raw = json.dumps([{"item": "from_api"}])
+
+    def _urlopen(req: object, timeout=None) -> _FakeResp:
+        assert _authorization_header(req) == "Bearer oauth-access-e2e"
+        return _FakeResp(raw)
+
+    db_file = tmp_path / "wh_oauth.duckdb"
+    config_path = tmp_path / "http_oauth.yaml"
+    config = {
+        "source": {
+            "type": "http",
+            "url": "https://example.com/api/oauth-data",
+            "oauth2_token_url": token_url,
+            "oauth2_client_id_env": "INGESTFLOW_TEST_OAUTH_CID",
+            "oauth2_client_secret_env": "INGESTFLOW_TEST_OAUTH_CSEC",
+        },
+        "target": {
+            "type": "duckdb",
+            "table": "http_e2e_oauth",
+            "db_path": str(db_file),
+        },
+        "load": {"mode": "replace"},
+    }
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    with patch(
+        "core.http_auth.fetch_client_credentials_token",
+        return_value="oauth-access-e2e",
+    ) as fetch_mock:
+        with patch(
+            "extractor.http_extractor.urllib.request.urlopen",
+            side_effect=_urlopen,
+        ) as url_mock:
+            main.run_pipeline(str(config_path), dry_run=False)
+
+    fetch_mock.assert_called_once()
+    assert fetch_mock.call_args[0][0] == token_url
+    assert fetch_mock.call_args[0][1] == "cid_e2e"
+    assert fetch_mock.call_args[0][2] == "csec_e2e"
+
+    assert url_mock.call_count == 1
+
+    con = duckdb.connect(str(db_file))
+    try:
+        cell = con.execute(
+            "SELECT item FROM http_e2e_oauth LIMIT 1"
+        ).fetchone()[0]
+        assert str(cell) == "from_api"
     finally:
         con.close()
 
