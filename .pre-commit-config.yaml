@@ -1,0 +1,14 @@
+# Install: pip install pre-commit && pre-commit install
+# Run all hooks once: pre-commit run --all-files  (or: make precommit)
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
+    hooks:
+      - id: ruff
+        args:
+          - check
+          - main.py
+          - src
+          - tests
+          - scripts
