@@ -167,7 +167,8 @@ def test_run_pipeline_postgres_table_and_schema_to_duckdb(tmp_path: Path) -> Non
         assert len(runs) == 1
         assert runs[0][0] == "success"
         assert runs[0][1] == 2
-        # _source_label uses query text only; table-only config yields empty query slice.
-        assert str(runs[0][2]).startswith("postgres:")
+        assert str(runs[0][2]) == (
+            f"postgres:{_E2E_SCHEMA}.{_E2E_TBL}"
+        )
     finally:
         con.close()

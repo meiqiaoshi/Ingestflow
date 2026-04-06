@@ -46,5 +46,5 @@ jobs:
       - name: Ruff check
         run: ruff check main.py src tests scripts
 
-      - name: Run tests
-        run: pytest
+      - name: Run tests with coverage
+        run: pytest --cov=src --cov=main --cov-report=term-missing

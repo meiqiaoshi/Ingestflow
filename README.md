@@ -85,7 +85,7 @@ ruff check main.py src tests scripts
 pytest
 ```
 
-On macOS/Linux you can use **`make check`** (or **`make lint`**, **`make test`**) from the repo root; see **`Makefile`**. **`make sample-parquet`** then **`make run-sample`** matches the Quick start Parquet flow; **`make run-sample`** alone runs the CSV sample config.
+On macOS/Linux you can use **`make check`** (or **`make lint`**, **`make test`**) from the repo root; see **`Makefile`**. **`make test-cov`** runs **pytest** with **coverage** for **`src/`** and **`main.py`** (same as CI). **`make sample-parquet`** then **`make run-sample`** matches the Quick start Parquet flow; **`make run-sample`** alone runs the CSV sample config.
 
 Optional: install **`pre-commit`** (`requirements-dev.txt`), run **`pre-commit install`**, then hooks match CI lint; **`make precommit`** runs all hooks once. To exercise the **Postgres** integration test locally, set **`INGESTFLOW_TEST_PG_DSN`** to a reachable DSN (CI sets this automatically with a service container).
 

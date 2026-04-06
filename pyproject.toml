@@ -5,3 +5,12 @@ line-length = 100
 [tool.ruff.lint]
 # Pyflakes only for CI — catches unused imports / undefined names without reformatting the repo.
 select = ["F"]
+
+[tool.coverage.run]
+branch = true
+source = ["src", "main.py"]
+relative_files = true
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
