@@ -93,7 +93,7 @@ CI runs **`ruff check`** (Pyflakes-style `F` rules) and **pytest** (Postgres **e
 
 Unit tests mock DuckDB so the default `warehouse.duckdb` is untouched. **`tests/test_integration_pipeline.py`** runs CSV → temp DuckDB `replace`; **`tests/test_integration_incremental.py`** runs two upsert loads with **incremental watermark** (same CSV path, growing file) in CI as well.
 
-On GitHub, pushes and pull requests to `main` run the same suite via **GitHub Actions** (`.github/workflows/ci.yml`).
+On GitHub, pushes and pull requests to `main` run the same suite via **GitHub Actions** (`.github/workflows/ci.yml`). **Dependabot** (`.github/dependabot.yml`) proposes weekly updates for **pip** and **GitHub Actions**.
 
 By default DuckDB writes to **`warehouse.duckdb`** in the project root (override with `target.db_path` in YAML). That file may contain:
 
