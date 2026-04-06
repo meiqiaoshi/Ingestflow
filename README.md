@@ -46,6 +46,16 @@ python main.py runs list --format csv
 python main.py runs list --format csv -o /tmp/runs.csv
 ```
 
+**Run history (Streamlit, optional — Phase 7):** browse `ingestion_runs` in a browser with the same filters as `runs list`.
+
+```bash
+pip install -r requirements-dashboard.txt
+streamlit run scripts/dashboard_runs.py
+# or: make dashboard   (after installing requirements-dashboard.txt)
+```
+
+Set the DuckDB path in the sidebar (default `warehouse.duckdb`).
+
 Generate the sample Parquet file before running the Parquet pipeline:
 
 ```bash

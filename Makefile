@@ -2,7 +2,7 @@
 
 PYTHON ?= python3
 
-.PHONY: help install-dev lint test test-cov check precommit run-sample sample-parquet
+.PHONY: help install-dev lint test test-cov check precommit dashboard run-sample sample-parquet
 
 help:
 	@echo "make install-dev    pip install -r requirements-dev.txt"
@@ -30,6 +30,9 @@ check: lint test
 
 precommit:
 	$(PYTHON) -m pre_commit run --all-files
+
+dashboard:
+	$(PYTHON) -m streamlit run scripts/dashboard_runs.py
 
 sample-parquet:
 	$(PYTHON) scripts/generate_sample_parquet.py

@@ -1,0 +1,3 @@
+# Optional Phase 7 UI — install with: pip install -r requirements-dashboard.txt
+-r requirements.txt
+streamlit>=1.28

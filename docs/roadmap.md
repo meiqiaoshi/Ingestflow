@@ -255,6 +255,6 @@ Near-term priorities:
 
 1. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
 2. **Phase 6** — optional **more integration tests** (HTTP mock + real DB, or incremental second run); further CLI/DX polish as needed.
-3. **Phase 7** — optional **dashboard** or external **observability hooks** (run history already exportable as JSON/CSV).
+3. **Phase 7** — optional **Streamlit dashboard** (`scripts/dashboard_runs.py`, `requirements-dashboard.txt`) or external **observability hooks** (run history also exportable as JSON/CSV via CLI).
 
 The CSV → DuckDB baseline and config-driven core are no longer the blocking goal; they are established.
