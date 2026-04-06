@@ -29,6 +29,8 @@ def test_extract_postgres_real_select_literal() -> None:
 
 
 _E2E_TABLE = "ingestflow_e2e_run"
+_E2E_SCHEMA = "ingestflow_e2e_schema"
+_E2E_TBL = "tbl_from_table"
 
 
 @PG_SKIP
@@ -91,5 +93,81 @@ def test_run_pipeline_postgres_query_to_duckdb(tmp_path: Path) -> None:
         assert runs[0][1] == 2
         assert str(runs[0][2]).startswith("postgres:")
         assert _E2E_TABLE in str(runs[0][2])
+    finally:
+        con.close()
+
+
+@PG_SKIP
+def test_run_pipeline_postgres_table_and_schema_to_duckdb(tmp_path: Path) -> None:
+    """Postgres ``table`` + ``schema`` (no ``query``) → ``postgres_select_star_sql`` → DuckDB."""
+    conn = psycopg2.connect(DSN)
+    try:
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{_E2E_SCHEMA}"')
+        cur.execute(
+            f'DROP TABLE IF EXISTS "{_E2E_SCHEMA}"."{_E2E_TBL}"'
+        )
+        cur.execute(
+            f'CREATE TABLE "{_E2E_SCHEMA}"."{_E2E_TBL}" '
+            f"(id INTEGER PRIMARY KEY, v TEXT)"
+        )
+        cur.execute(
+            f'INSERT INTO "{_E2E_SCHEMA}"."{_E2E_TBL}" (id, v) '
+            f"VALUES (10, 'p'), (20, 'q')"
+        )
+    finally:
+        conn.close()
+
+    db_file = tmp_path / "pg_by_table.duckdb"
+    config_path = tmp_path / "postgres_table.yaml"
+    config = {
+        "source": {
+            "type": "postgres",
+            "dsn": DSN,
+            "schema": _E2E_SCHEMA,
+            "table": _E2E_TBL,
+        },
+        "target": {
+            "type": "duckdb",
+            "table": "pg_e2e_from_pg_table",
+            "db_path": str(db_file),
+        },
+        "load": {"mode": "replace"},
+    }
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    try:
+        main.run_pipeline(str(config_path), dry_run=False)
+    finally:
+        c2 = psycopg2.connect(DSN)
+        try:
+            c2.autocommit = True
+            cur2 = c2.cursor()
+            cur2.execute(
+                f'DROP TABLE IF EXISTS "{_E2E_SCHEMA}"."{_E2E_TBL}"'
+            )
+            cur2.execute(
+                f'DROP SCHEMA IF EXISTS "{_E2E_SCHEMA}"'
+            )
+        finally:
+            c2.close()
+
+    con = duckdb.connect(str(db_file))
+    try:
+        rows = con.execute(
+            "SELECT id, v FROM pg_e2e_from_pg_table ORDER BY id"
+        ).fetchall()
+        assert len(rows) == 2
+        assert int(rows[0][0]) == 10 and str(rows[0][1]) == "p"
+        assert int(rows[1][0]) == 20 and str(rows[1][1]) == "q"
+        runs = con.execute(
+            "SELECT status, rows_loaded, source_path FROM ingestion_runs"
+        ).fetchall()
+        assert len(runs) == 1
+        assert runs[0][0] == "success"
+        assert runs[0][1] == 2
+        # _source_label uses query text only; table-only config yields empty query slice.
+        assert str(runs[0][2]).startswith("postgres:")
     finally:
         con.close()
