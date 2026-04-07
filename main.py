@@ -7,7 +7,10 @@ from typing import TextIO
 
 from dotenv import load_dotenv
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+# Repo layout: packages live under ``src/``. When installed, they are on sys.path already.
+_src = Path(__file__).resolve().parent / "src"
+if _src.is_dir():
+    sys.path.insert(0, str(_src))
 
 from core.config import load_config
 from core.logging_config import configure_logging

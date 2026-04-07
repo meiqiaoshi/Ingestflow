@@ -19,6 +19,7 @@ The **v0.1** line is a **usable baseline**: YAML-driven pipelines into **DuckDB*
 
 - **Config, columns, and observability:** [`docs/config_spec.md`](docs/config_spec.md) — see **section 9** for `ingestion_runs`, `source_path`, and the stderr JSON summary.
 - **Planned vs delivered:** [`docs/roadmap.md`](docs/roadmap.md).
+- **Release notes:** [`CHANGELOG.md`](CHANGELOG.md) (current: **0.1.0**).
 
 **Known limitations (v0.1):** CLI is **single-process** (no distributed scheduler); default warehouse is **local DuckDB**; supported sources are **CSV, Parquet, HTTP, PostgreSQL** as documented—broader platform integrations stay out of scope for this milestone.
 
@@ -33,6 +34,13 @@ cd Ingestflow
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+**Optional — install the repo as a package** (same Python **3.10+** as above; metadata in **`pyproject.toml`**):
+
+```bash
+pip install -e .
+ingestflow run --config configs/sample.yaml   # same as: python main.py run --config ...
 ```
 
 Run the sample pipeline:
