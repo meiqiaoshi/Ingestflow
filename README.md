@@ -13,6 +13,15 @@ It enables users to define ingestion pipelines via configuration files, supporti
 
 Instead of writing ad-hoc scripts for each dataset, IngestFlow provides a reusable and extensible framework for standardized data ingestion.
 
+### Status (v0.1 milestone)
+
+The **v0.1** line is a **usable baseline**: YAML-driven pipelines into **DuckDB**, **incremental** loads, **run history** in `ingestion_runs`, **CLI** (`run`, `runs list`), integration tests, **CI** (Python 3.11–3.13 with optional Postgres checks), optional **Streamlit** run browser, and **Dependabot**.
+
+- **Config, columns, and observability:** [`docs/config_spec.md`](docs/config_spec.md) — see **section 9** for `ingestion_runs`, `source_path`, and the stderr JSON summary.
+- **Planned vs delivered:** [`docs/roadmap.md`](docs/roadmap.md).
+
+**Known limitations (v0.1):** CLI is **single-process** (no distributed scheduler); default warehouse is **local DuckDB**; supported sources are **CSV, Parquet, HTTP, PostgreSQL** as documented—broader platform integrations stay out of scope for this milestone.
+
 ---
 
 ## Quick start
