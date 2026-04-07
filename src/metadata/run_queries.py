@@ -77,8 +77,10 @@ def list_ingestion_runs(
                 source_path,
                 target_table,
                 rows_loaded,
+                error_message,
                 load_mode,
                 incremental_enabled,
+                db_path,
                 config_path
             FROM ingestion_runs
             {where}

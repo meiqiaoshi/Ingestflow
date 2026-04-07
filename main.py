@@ -35,8 +35,10 @@ _RUNS_LIST_CSV_COLUMNS = [
     "source_path",
     "target_table",
     "rows_loaded",
+    "error_message",
     "load_mode",
     "incremental_enabled",
+    "db_path",
     "config_path",
 ]
 

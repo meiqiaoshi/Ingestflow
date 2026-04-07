@@ -247,7 +247,7 @@ load:
 python main.py run --config configs/sample.yaml
 ```
 
-See `docs/config_spec.md` for the full YAML schema.
+See `docs/config_spec.md` for the full YAML schema. **Section 9** there describes **`ingestion_runs`** columns, **`source_path`** rules, **`runs list` / Streamlit** output, and the **stderr JSON summary** line (`ingestflow_run`).
 
 ---
 

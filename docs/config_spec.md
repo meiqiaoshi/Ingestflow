@@ -410,7 +410,64 @@ load:
 
 ---
 
-## 9. Design Principles
+## 9. Run history & observability
+
+Each successful or failed **`run`** (when not **`--dry-run`**) inserts one row into DuckDB table **`ingestion_runs`** in the warehouse file (`target.db_path`, default **`warehouse.duckdb`**).
+
+### Table `ingestion_runs` (columns)
+
+| Column | Meaning |
+|--------|---------|
+| `run_id` | UUID for the run |
+| `started_at` / `finished_at` | UTC timestamps |
+| `status` | e.g. `success`, `failed` |
+| `source_path` | Human-readable source label (see below) |
+| `target_table` | DuckDB table written to |
+| `rows_loaded` | Row count when known; may be null on early failure |
+| `error_message` | Truncated error text when `status` is `failed` |
+| `load_mode` | `replace`, `append`, or `upsert` |
+| `incremental_enabled` | Whether incremental watermark was enabled |
+| `db_path` | Warehouse DuckDB path used for this run |
+| `config_path` | Resolved absolute path to the pipeline YAML |
+
+### `source_path` values (by `source.type`)
+
+- **`csv` / `parquet`**: file path string from config.
+- **`http`**: request URL string.
+- **`postgres`**:  
+  - If **`source.query`** is set: `postgres:` + first **120 characters** of the query (append `...` if longer).  
+  - If only **`source.table`** (and optional **`source.schema`**, default `public`): `postgres:{schema}.{table}` (first 120 chars of that suffix if ever extended).
+
+The same string appears in logs as **Source:**.
+
+### CLI and UI
+
+- **`python main.py runs list`**: filters (`--status`, `--config-contains`, `--since`, `--until`), formats **`table` / `json` / `csv`**, optional **`-o`**. Output includes **`error_message`** and **`db_path`** when present.
+- **Streamlit** (`scripts/dashboard_runs.py`): reads the same columns via **`list_ingestion_runs`**.
+
+### Stderr JSON summary line
+
+Unless **`--no-json-summary`** is set on **`run`**, after completion IngestFlow prints **one JSON object** to **stderr** (separate from log records). Field **`event`** is always **`ingestflow_run`** for log routing.
+
+| Field | Meaning |
+|-------|---------|
+| `run_id` | Same as `ingestion_runs.run_id` |
+| `config_path` | Resolved YAML path |
+| `status` | `success` or `failed` |
+| `started_at` / `finished_at` | ISO 8601 |
+| `duration_seconds` | Wall time |
+| `rows_loaded` | int or null |
+| `target_table` | Target table name |
+| `load_mode` | `replace` / `append` / `upsert` |
+| `incremental_enabled` | bool |
+| `dry_run` | bool |
+| `source_type` | e.g. `csv`, `http`, `postgres` |
+| `db_path` | Warehouse path |
+| `error` | Present only on failure; truncated to 2000 chars |
+
+---
+
+## 10. Design Principles
 
 - Config should be simple and readable
 - Avoid over-engineering early
@@ -419,7 +476,7 @@ load:
 
 ---
 
-## 10. Future Extensions
+## 11. Future Extensions
 
 - API source configuration
 - Database connection parameters

@@ -120,3 +120,48 @@ def test_list_ingestion_runs_since_until(tmp_path: Path) -> None:
     )
     assert len(df2) == 1
     assert "aaaaaaaa" in str(df2.iloc[0]["run_id"])
+
+
+def test_list_ingestion_runs_includes_error_message_and_db_path(
+    tmp_path: Path,
+) -> None:
+    db = tmp_path / "w2.duckdb"
+    con = duckdb.connect(str(db))
+    try:
+        ensure_runs_table(con)
+        con.execute(
+            """
+            INSERT INTO ingestion_runs (
+                run_id, started_at, finished_at, status,
+                source_path, target_table, rows_loaded, error_message,
+                load_mode, incremental_enabled, db_path, config_path
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+                "failed",
+                "https://x",
+                "t_err",
+                None,
+                "boom",
+                "replace",
+                False,
+                "/abs/warehouse.duckdb",
+                "/cfg.yaml",
+            ],
+        )
+    finally:
+        con.close()
+
+    df = list_ingestion_runs(str(db), limit=5)
+    assert set(df.columns) >= {
+        "error_message",
+        "db_path",
+        "config_path",
+    }
+    row = df.iloc[0]
+    assert row["error_message"] == "boom"
+    assert row["db_path"] == "/abs/warehouse.duckdb"
