@@ -266,6 +266,12 @@ Planned phases, **implementation status**, and **current focus** are documented 
 
 ---
 
+## License
+
+Released under the [MIT License](LICENSE).
+
+---
+
 ## 🧾 Author
 
 Meiqiao Shi  
