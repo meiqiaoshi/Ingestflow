@@ -18,9 +18,9 @@ Snapshot of how the phases map to the codebase today:
 | **2** | Run metadata (`ingestion_runs`), logging, execution summary | **Delivered** |
 | **3** | Validation (`required_columns`, `null_checks`, `type_checks`) | **Delivered** |
 | **4** | Append / upsert, checkpoints, incremental, composite `primary_key` | **Delivered** |
-| **5** | Parquet + HTTP (bearer/basic/**OAuth2**/**HMAC-SHA256**, JSON, pagination) + **PostgreSQL** (`query` or **table/schema**, **limits/timeouts**), **dispatcher** | **Partial** — streaming pagination, more DBs **planned** |
-| **6** | Tests (`pytest`), CI, `.env` / `${VAR}`, **integration**: CSV replace + **incremental two-run** (checkpoint + upsert) | **Partial** — HTTP + real DB combo optional |
-| **7** | **`runs list`** (filters, **`--format`**, **`--output`**), **JSON run summary line** on stderr, dashboards TBD | **Partial** — Streamlit **planned** |
+| **5** | Parquet + HTTP (bearer/basic/**OAuth2**/**HMAC-SHA256**, JSON, pagination) + **PostgreSQL** (`query` or **table/schema**, **limits/timeouts**), **dispatcher** | **Delivered** (v0.1). *Future:* HTTP **streaming** pagination, **additional DB** connectors |
+| **6** | Tests (`pytest`), CI, `.env` / `${VAR}`, **integration** (CSV, incremental, HTTP mocks, Postgres in CI) | **Delivered** (v0.1). *Future:* more scenarios as needed |
+| **7** | **`runs list`**, **JSON run summary** on stderr, optional **Streamlit** (`scripts/dashboard_runs.py`), **`config_spec` §9** observability notes | **Delivered** (v0.1). *Future:* webhooks, OpenTelemetry, richer dashboards |
 
 ---
 
@@ -237,24 +237,24 @@ Prepare IngestFlow for richer operational visibility and future integrations.
 
 ## Recommended Development Order
 
-The original sequence still reflects dependencies (each phase builds on the last). Phases **1–4** are in place; ongoing work follows **5 → 6 → 7** for connectors, developer experience, and operations.
+The original sequence still reflects dependencies (each phase builds on the last). Phases **1–7** meet the **v0.1** baseline (see implementation table above). Further work is **optional** and driven by new connectors, ops integrations, or UX.
 
 1. Phase 1 — Minimal Working Ingestion Pipeline *(done)*
 2. Phase 2 — Metadata Tracking and Audit Logging *(done)*
 3. Phase 3 — Validation Layer *(done)*
 4. Phase 4 — Incremental Loading *(done)*
-5. Phase 5 — Additional Connectors *(in progress — finish planned connectors / auth patterns)*
-6. Phase 6 — Developer Experience Improvements *(in progress — expand integration coverage if needed)*
-7. Phase 7 — Monitoring and Extension Layer *(in progress — CLI run history; optional dashboard)*
+5. Phase 5 — Additional Connectors *(v0.1 delivered; extend as needed)*
+6. Phase 6 — Developer Experience Improvements *(v0.1 delivered; polish as needed)*
+7. Phase 7 — Monitoring and Extension Layer *(v0.1 delivered; extend as needed)*
 
 ---
 
 ## Current focus
 
-Near-term priorities:
+**v0.1** is complete for the baseline above. Optional next steps (pick by need):
 
-1. **Phase 5** — extend HTTP (OAuth2 / HMAC / streaming pagination where needed) or add a first **database read** connector if a concrete use case appears.
-2. **Phase 6** — optional **more integration tests** (HTTP mock + real DB, or incremental second run); further CLI/DX polish as needed.
-3. **Phase 7** — optional **Streamlit dashboard** (`scripts/dashboard_runs.py`, `requirements-dashboard.txt`) or external **observability hooks** (run history also exportable as JSON/CSV via CLI).
+1. **Phase 5** — HTTP **streaming** pagination; **Snowflake / BigQuery / …** or other read connectors if a concrete use case appears.
+2. **Phase 6** — more **integration tests** or **CLI/DX** polish (e.g. `ingestflow` packaging, docs only).
+3. **Phase 7** — **external observability** (webhooks, OpenTelemetry), **Codecov** or coverage gates, or a richer **Streamlit** view.
 
-The CSV → DuckDB baseline and config-driven core are no longer the blocking goal; they are established.
+The CSV → DuckDB baseline and config-driven core are established; new work is incremental, not blocking.
